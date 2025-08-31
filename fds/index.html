@@ -6,10 +6,10 @@
     <title>Cartel Tycoon: Final Edition</title>
     <style>
         :root { --main-green: #00ff00; --main-red: #ff0000; --dark-bg: #0a0a0a; --card-bg: rgba(0, 20, 0, 0.7); --border-color: #003300; }
-        body { font-family: 'Courier New', monospace; background: var(--dark-bg); color: var(--main-green); margin: 0; padding: 0; overflow-x: hidden; }
+        body { font-family: 'Courier New', monospace; background: var(--dark-bg); color: var(--main-green); margin: 0; padding: 0; overflow: hidden; }
         .container { display: none; padding: 15px; max-width: 1600px; margin: 0 auto; text-align: left; }
         
-        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; margin-bottom: 10px; position: relative; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; margin-bottom: 10px; }
         .header h1 { font-size: 2rem; color: var(--main-red); text-shadow: 0 0 15px var(--main-red); margin: 0; }
         .top-stats-bar { display: flex; gap: 20px; background: var(--card-bg); padding: 5px 15px; border-radius: 8px; border: 1px solid var(--border-color); }
         .top-stats-bar p { margin: 0; font-size: 1rem; }
@@ -38,41 +38,6 @@
         .stock-info { display: flex; flex-direction: column; }
         .sparkline { stroke: var(--main-green); stroke-width: 2; fill: none; }
         .stock-up { color: var(--main-green); } .stock-down { color: var(--main-red); }
-        
-        /* ======================================================= */
-        /* ==   MOBILE RESPONSIVE STYLES (for smaller screens)  == */
-        /* ======================================================= */
-        @media (max-width: 800px) {
-            body {
-                overflow-y: auto; /* Allow vertical scrolling on mobile */
-            }
-            .header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            #pauseBtn {
-                position: absolute;
-                top: 15px;
-                right: 15px;
-            }
-            .top-stats-bar {
-                width: 100%;
-                box-sizing: border-box;
-                flex-wrap: wrap;
-                gap: 10px;
-            }
-            main {
-                grid-template-columns: 1fr; /* Stack the 3 columns into 1 */
-                height: auto; /* Allow the content to define the height */
-            }
-            .card {
-                padding: 12px;
-            }
-            .item-list {
-                max-height: 300px; /* Give lists a max height on mobile */
-            }
-        }
     </style>
 </head>
 <body>
@@ -108,6 +73,7 @@
 // =================================================================================
 // SECTION 1: CORE GAME SETUP & STATE
 // =================================================================================
+
 let playerName = "";
 let gameData = {};
 let gameLoopInterval = null;
@@ -130,9 +96,19 @@ function resetGameData(aiCount = 3) {
         portfolio: { omni: 0, tech: 0, fowl: 0 },
         heist: { target: null, crew: { hacker: null, driver: null, demo: null }, status: 'planning' },
         aiPlayers: [],
-        gameOver: false
+        gameOver: false,
+        drugMarket: {
+            weed: { soldRecently: 0 },
+            meth: { soldRecently: 0 },
+            coke: { soldRecently: 0 },
+            heroin: { soldRecently: 0 },
+            fentanyl: { soldRecently: 0 }
+        }
     };
-    const aiNames=["El Jefe","La Reina","The Ghost","El Martillo","La Viuda"];for(let i=0;i<aiCount;i++){gameData.aiPlayers.push({name:aiNames[i%aiNames.length],money:3000,drugs:10,goons:2,powerLevel:1,relationship:0,isAllied:false,strategy:["economic","aggressive"][i%2]})}
+    const aiNames = ["El Jefe", "La Reina", "The Ghost", "El Martillo", "La Viuda"];
+    for (let i = 0; i < aiCount; i++) {
+        gameData.aiPlayers.push({ name: aiNames[i % aiNames.length], money: 3000, drugs: 10, goons: 2, powerLevel: 1, relationship: 0, isAllied: false, strategy: ["economic", "aggressive"][i % 2] });
+    }
 }
 
 // =================================================================================
@@ -157,13 +133,17 @@ function startGame(mode) {
 function gameLoop() {
     if (isPaused || gameData.gameOver) return;
     if (gameData.heat >= 200) triggerGameOver("BUSTED! The heat was too much.");
-    updateStockMarket(); updateLaunderingSystem(); updateGoonSystem(); runAiTurns();
+    updateStockMarket();
+    updateLaunderingSystem();
+    updateGoonSystem();
+    runAiTurns();
+    updateMarketConditions();
     updateUI();
 }
 
 function togglePause() {
     if (gameData.gameOver) return;
-    isPaused = !isPaused; 
+    isPaused = !isPaused;
     const pauseBtn = document.getElementById('pauseBtn');
     const pauseOverlay = document.getElementById('pauseOverlay');
     if (isPaused) {
@@ -180,38 +160,334 @@ function togglePause() {
 // =================================================================================
 // SECTION 3: PLAYER ACTIONS & OPERATIONS
 // =================================================================================
-function handleButtonClick(actionFn, ...args) { if (isPaused) { showNotification("Game is paused!", "orange"); return; } actionFn(...args); if (gameMode === 'single') updateUI(); }
-function produceDrug(){let loyaltyBonus=0.8+(gameData.goonLoyalty/100)*0.7;if(gameData.currentDrug!=="weed"&&gameData.chemicals<=0){showNotification("Production halted. Need more chemicals!","orange");return}if(gameData.currentDrug!=="weed")gameData.chemicals--;let gain=(1+gameData.goons*0.5)*loyaltyBonus;gameData.drugs+=gain;let heatGain={"weed":0,"meth":2,"coke":5,"heroin":10,"fentanyl":25}[gameData.currentDrug]||0;if(heatGain>0)gameData.heat+=heatGain}
-function sellDrug(){if(gameData.drugs<1)return;let moneyGained={"weed":10,"meth":25,"coke":60,"heroin":150,"fentanyl":400}[gameData.currentDrug]||10;gameData.drugs--;gameData.money+=moneyGained}
-function manufactureArms(){const costs={1:500,2:2500,3:10000},arms={1:"handgun",2:"smg",3:"rifle"},heat={1:20,2:50,3:100};let tier=gameData.armsTier;if(tier===0){showNotification("You need an Arms Workshop first.","orange");return}if(gameData.money<costs[tier]){showNotification("Not enough cash for parts.","red");return}gameData.money-=costs[tier];gameData.armsStock[arms[tier]]++;gameData.heat+=heat[tier];showNotification(`Manufactured ${arms[tier]}. Heat increased!`,"orange")}
-function sellArms(){const prices={handgun:750,smg:4000,rifle:15000};let totalSale=0;for(const arm in gameData.armsStock){if(gameData.armsStock[arm]>0){totalSale+=gameData.armsStock[arm]*prices[arm];gameData.armsStock[arm]=0}}if(totalSale>0){gameData.money+=totalSale;showNotification(`Arms deal closed for $${totalSale}.`,"#00ffff")}}
-function buyGoon(){if(gameData.money>=100){gameData.money-=100;gameData.goons++}}
-function buyChemicals(){if(gameData.money>=500){gameData.money-=500;gameData.chemicals+=10}}
-function upgradeStructure(type){const config={lab:{costs:[5000,25000,100000,500000],levelVar:'labLevel',name:'Lab',unlocks:['meth','coke','heroin','fentanyl']},workshop:{costs:[15000,75000,300000],levelVar:'armsTier',name:'Workshop'}};const selection=config[type];let level=gameData[selection.levelVar];if(level>=selection.costs.length){showNotification(`${selection.name} is max level.`,"orange");return}let cost=selection.costs[level];if(gameData.whiteMoney<cost){showNotification(`Need $${cost} in CLEAN money to upgrade the ${selection.name}.`,"red");return}gameData.whiteMoney-=cost;gameData[selection.levelVar]++;if(type==='lab'){gameData.currentDrug=selection.unlocks[level];showNotification(`${selection.name} upgraded! You can now produce ${gameData.currentDrug}.`,"lightgreen")}else{showNotification(`${selection.name} upgraded to Tier ${gameData[selection.levelVar]}.`,"lightgreen")}}
+
+function handleButtonClick(actionFn, ...args) {
+    if (isPaused) {
+        showNotification("Game is paused!", "orange");
+        return;
+    }
+    actionFn(...args);
+    if (gameMode === 'single') {
+        updateUI();
+    }
+}
+
+function produceDrug() {
+    let loyaltyBonus = 0.8 + (gameData.goonLoyalty / 100) * 0.7;
+    if (gameData.currentDrug !== "weed" && gameData.chemicals <= 0) {
+        showNotification("Production halted. Need more chemicals!", "orange");
+        return;
+    }
+    if (gameData.currentDrug !== "weed") gameData.chemicals--;
+    let gain = (1 + gameData.goons * 0.5) * loyaltyBonus;
+    gameData.drugs += gain;
+    let heatGain = { "weed": 0, "meth": 2, "coke": 5, "heroin": 10, "fentanyl": 25 }[gameData.currentDrug] || 0;
+    if (heatGain > 0) gameData.heat += heatGain;
+}
+
+function sellDrug() {
+    if (gameData.drugs < 1) return;
+
+    const drug = gameData.currentDrug;
+    const market = gameData.drugMarket[drug];
+    const data = MARKET_DATA[drug];
+
+    const priceMultiplier = Math.max(0.1, 1 - (market.soldRecently / data.saturation));
+    const moneyGained = data.basePrice * priceMultiplier;
+
+    gameData.drugs--;
+    gameData.money += moneyGained;
+    market.soldRecently++;
+
+    if (market.soldRecently > data.suspicion) {
+        let heatGain = (market.soldRecently - data.suspicion) * data.heatFactor;
+        gameData.heat += heatGain;
+        showNotification(`Your volume is attracting attention! +${heatGain.toFixed(2)} Heat`, "orange");
+    }
+}
+
+function manufactureArms() {
+    const costs = { 1: 500, 2: 2500, 3: 10000 };
+    const arms = { 1: "handgun", 2: "smg", 3: "rifle" };
+    const heat = { 1: 20, 2: 50, 3: 100 };
+    let tier = gameData.armsTier;
+    if (tier === 0) { showNotification("You need an Arms Workshop first.", "orange"); return; }
+    if (gameData.money < costs[tier]) { showNotification("Not enough cash for parts.", "red"); return; }
+    gameData.money -= costs[tier];
+    gameData.armsStock[arms[tier]]++;
+    gameData.heat += heat[tier];
+    showNotification(`Manufactured ${arms[tier]}. Heat increased!`, "orange");
+}
+
+function sellArms() {
+    const prices = { handgun: 750, smg: 4000, rifle: 15000 };
+    let totalSale = 0;
+    for (const arm in gameData.armsStock) {
+        if (gameData.armsStock[arm] > 0) {
+            totalSale += gameData.armsStock[arm] * prices[arm];
+            gameData.armsStock[arm] = 0;
+        }
+    }
+    if (totalSale > 0) {
+        gameData.money += totalSale;
+        showNotification(`Arms deal closed for $${totalSale}.`, "#00ffff");
+    }
+}
+
+function buyGoon() { if (gameData.money >= 100) { gameData.money -= 100; gameData.goons++; } }
+function buyChemicals() { if (gameData.money >= 500) { gameData.money -= 500; gameData.chemicals += 10; } }
+
+function upgradeStructure(type) {
+    const config = {
+        lab: { costs: [5000, 25000, 100000, 500000], levelVar: 'labLevel', name: 'Lab', unlocks: ['meth', 'coke', 'heroin', 'fentanyl'] },
+        workshop: { costs: [15000, 75000, 300000], levelVar: 'armsTier', name: 'Workshop' }
+    };
+    const selection = config[type];
+    let level = gameData[selection.levelVar];
+    if (level >= selection.costs.length) { showNotification(`${selection.name} is max level.`, "orange"); return; }
+    let cost = selection.costs[level];
+    if (gameData.whiteMoney < cost) { showNotification(`Need $${cost} in CLEAN money to upgrade the ${selection.name}.`, "red"); return; }
+    gameData.whiteMoney -= cost;
+    gameData[selection.levelVar]++;
+    if (type === 'lab') {
+        gameData.currentDrug = selection.unlocks[level];
+        showNotification(`${selection.name} upgraded! You can now produce ${gameData.currentDrug}.`, "lightgreen");
+    } else {
+        showNotification(`${selection.name} upgraded to Tier ${gameData[selection.levelVar]}.`, "lightgreen");
+    }
+}
+
 // =================================================================================
 // SECTION 4: ADVANCED SYSTEMS (AI, Loyalty, Laundering, Heists)
 // =================================================================================
-function updateStockMarket(){for(const key in gameData.stocks){let stock=gameData.stocks[key];let randomChange=(Math.random()-0.5)*(stock.price*0.015);stock.momentum=(stock.momentum*0.98)+randomChange;stock.price+=stock.momentum;stock.trend=stock.momentum;if(stock.price<5){stock.price=5;stock.momentum=Math.abs(stock.momentum)}stock.priceHistory.push(stock.price);if(stock.priceHistory.length>50)stock.priceHistory.shift()}}
-function updateLaunderingSystem(){gameData.llcs.forEach(llc=>{if(gameData.heat<100){llc.reputation+=0.1}else{llc.reputation-=0.2}if(llc.reputation<0)llc.reputation=0;llc.publicInvestment=llc.reputation*10})}
-function skimLaunderedFunds(llcIndex){let llc=gameData.llcs[llcIndex];if(llc.publicInvestment<1){showNotification("No public funds available to skim.","orange");return}let amountToSkim=llc.publicInvestment*0.1;llc.publicInvestment-=amountToSkim;llc.reputation*=0.9;gameData.whiteMoney+=amountToSkim;gameData.heat+=amountToSkim*0.05;showNotification(`Skimmed $${amountToSkim.toFixed(0)} from ${llc.name}. Heat increased!`,"lightgreen")}
-function runAiTurns(){gameData.aiPlayers.forEach((ai)=>{ai.money+=ai.goons*ai.powerLevel*5;ai.relationship=Math.max(-100,Math.min(100,ai.relationship-0.1));if(ai.strategy==='aggressive'&&ai.relationship<-50&&Math.random()<0.1){let stolen=Math.floor(gameData.money*0.05*ai.powerLevel);gameData.money-=stolen;showNotification(`${ai.name} has attacked your operation, stealing $${stolen}!`,"red")}}) }
-function proposeDeal(aiIndex){let ai=gameData.aiPlayers[aiIndex];let cost=10000;if(gameData.money<cost){showNotification("Not enough cash to broker a deal.","red");return}gameData.money-=cost;if(Math.random()*100<(50+ai.relationship)){ai.relationship+=25;showNotification(`${ai.name} accepts the deal. Your relationship has improved.`,"lightgreen")}else{ai.relationship-=15;showNotification(`${ai.name} rejects your offer with contempt.`,"orange")}}
-function attackAI(aiIndex){let ai=gameData.aiPlayers[aiIndex];let playerPower=gameData.goons+(gameData.armsStock.handgun+gameData.armsStock.smg*2+gameData.armsStock.rifle*3);let aiPower=ai.goons*ai.powerLevel;if(playerPower>aiPower){let stolen=Math.floor(ai.money*0.2);gameData.money+=stolen;ai.relationship-=50;ai.powerLevel+=0.2;showNotification(`Successful raid on ${ai.name}! You stole $${stolen}. They won't forget this.`,"#00ffff")}else{let lost=Math.floor(gameData.money*0.1);gameData.money-=lost;gameData.heat+=20;showNotification(`Your attack on ${ai.name} failed! You lost $${lost}.`,"red")}}
-function updateGoonSystem(){if(gameData.goons<=0)return;gameData.payrollDue--;if(gameData.payrollDue<=0){let payrollCost=gameData.goons*50;if(gameData.money>=payrollCost){gameData.money-=payrollCost;gameData.goonLoyalty+=5}else{gameData.goonLoyalty-=20;showNotification(`CAN'T PAY PAYROLL! Morale has plummeted!`,"red")}gameData.payrollDue=100}gameData.goonLoyalty-=0.05;if(gameData.goonLoyalty<30&&Math.random()<0.01){let stolen=Math.floor(gameData.money*0.1);gameData.money-=stolen;showNotification(`Disloyal goons stole $${stolen} from you!`,"red")}if(gameData.goonLoyalty<=0){gameData.heat+=100;gameData.goons--;gameData.goonLoyalty=20;showNotification(`A goon snitched to the cops and quit! MASSIVE heat increase!`,"red")}if(gameData.goonLoyalty>100)gameData.goonLoyalty=100;if(gameData.goonLoyalty<0)gameData.goonLoyalty=0}
-function payGoonBonus(){let bonusCost=gameData.goons*100;if(gameData.goons<=0)return;if(gameData.money<bonusCost){showNotification("Not enough cash for bonuses.","red");return}gameData.money-=bonusCost;gameData.goonLoyalty+=15;showNotification(`You paid $${bonusCost} in bonuses. Morale is very high!`,"#00ffff")}
-function establishLLC(){const cost=25000;if(gameData.money<cost)return;gameData.money-=cost;const types=["Car Wash","Restaurant","Nightclub","Casino"];const type=types[gameData.llcs.length%types.length];gameData.llcs.push({name:`${playerName}'s ${type}`,invested:0,reputation:0,publicInvestment:0,risk:0.1});showNotification("LLC established!","#00ffff")}
-function investDirtyMoney(llcIndex,amount){if(gameData.money<amount)return;gameData.money-=amount;gameData.llcs[llcIndex].invested+=amount}
-function buyStock(llcIndex,stockKey,shares){if(gameData.llcs.length===0){showNotification("You must establish an LLC to trade stocks.","orange");return}let llc=gameData.llcs[llcIndex];let stock=gameData.stocks[stockKey];let cost=stock.price*shares;if(llc.invested<cost){showNotification("Not enough invested funds in this LLC.","red");return}llc.invested-=cost;gameData.portfolio[stockKey]+=shares}
-function sellStock(stockKey,shares){let stock=gameData.stocks[stockKey];if(gameData.portfolio[stockKey]<shares)return;let earnings=stock.price*shares*0.98;gameData.portfolio[stockKey]-=shares;gameData.whiteMoney+=earnings;showNotification(`Sold ${shares} shares. $${earnings.toFixed(0)} is clean.`,"lightgreen")}
-const HEIST_TARGETS={liquor_store:{name:"Liquor Store",difficulty:20,payout:20000,crewSlots:['driver']},bank:{name:"Federal Bank",difficulty:75,payout:500000,crewSlots:['hacker','driver','demo']},armored_truck:{name:"Armored Truck",difficulty:50,payout:150000,crewSlots:['driver','demo']}};
-const SPECIALISTS={hacker:[{name:"Script Kiddie",skill:10,cost:1000},{name:"Pro Cypher",skill:30,cost:5000}],driver:[{name:"Street Racer",skill:15,cost:1500},{name:"Ex-Stuntman",skill:35,cost:7000}],demo:[{name:"Thug with C4",skill:20,cost:2500},{name:"Sapper",skill:40,cost:10000}]};
-function selectHeistTarget(targetKey){gameData.heist.target=HEIST_TARGETS[targetKey];gameData.heist.crew={hacker:null,driver:null,demo:null}}
-function hireSpecialist(type,tier){const s=SPECIALISTS[type][tier];if(gameData.money<s.cost)return;if(!gameData.heist.target.crewSlots.includes(type))return;gameData.money-=s.cost;gameData.heist.crew[type]=s}
-function executeHeist(){let t=gameData.heist.target;let c=gameData.heist.crew;let totalSkill=0;for(const slot of t.crewSlots){if(!c[slot]){showNotification(`Cannot start heist without a ${slot}!`,"red");return}totalSkill+=c[slot].skill}let successChance=Math.max(10,Math.min(95,50+totalSkill-t.difficulty));if(Math.random()*100<successChance){gameData.money+=t.payout;showNotification(`SUCCESS! Got away with $${t.payout}.`,"lightgreen");gameData.heat+=t.difficulty/5}else{gameData.heat+=t.difficulty*(1+(100-successChance)/100);gameData.goonLoyalty-=25;showNotification(`BOTCHED! The heist failed! Massive heat spike!`,"red")}gameData.heist={target:null,crew:{hacker:null,driver:null,demo:null},status:'planning'}}
+
+const MARKET_DATA = {
+    weed:     { basePrice: 10, saturation: 1000, suspicion: 500, heatFactor: 0.005 },
+    meth:     { basePrice: 25, saturation: 500,  suspicion: 100, heatFactor: 0.02  },
+    coke:     { basePrice: 60, saturation: 200,  suspicion: 50,  heatFactor: 0.1   },
+    heroin:   { basePrice: 150, saturation: 100,  suspicion: 20,  heatFactor: 0.5   },
+    fentanyl: { basePrice: 400, saturation: 50,   suspicion: 5,   heatFactor: 2.0   }
+};
+
+function updateMarketConditions() {
+    for (const drug in gameData.drugMarket) {
+        gameData.drugMarket[drug].soldRecently *= 0.95;
+    }
+}
+
+function updateStockMarket() {
+    for (const key in gameData.stocks) {
+        let stock = gameData.stocks[key];
+        let randomChange = (Math.random() - 0.5) * (stock.price * 0.015);
+        stock.momentum = (stock.momentum * 0.98) + randomChange;
+        stock.price += stock.momentum;
+        stock.trend = stock.momentum;
+        if (stock.price < 5) {
+            stock.price = 5;
+            stock.momentum = Math.abs(stock.momentum);
+        }
+        stock.priceHistory.push(stock.price);
+        if (stock.priceHistory.length > 50) {
+            stock.priceHistory.shift();
+        }
+    }
+}
+
+function updateLaunderingSystem() {
+    gameData.llcs.forEach(llc => {
+        if (gameData.heat < 100) {
+            llc.reputation += 0.1;
+        } else {
+            llc.reputation -= 0.2;
+        }
+        if (llc.reputation < 0) llc.reputation = 0;
+        llc.publicInvestment = llc.reputation * 10;
+    });
+}
+
+function skimLaunderedFunds(llcIndex) {
+    let llc = gameData.llcs[llcIndex];
+    if (llc.publicInvestment < 1) {
+        showNotification("No public funds available to skim.", "orange");
+        return;
+    }
+    let amountToSkim = llc.publicInvestment * 0.1;
+    llc.publicInvestment -= amountToSkim;
+    llc.reputation *= 0.9;
+    gameData.whiteMoney += amountToSkim;
+    gameData.heat += amountToSkim * 0.05;
+    showNotification(`Skimmed $${amountToSkim.toFixed(0)} from ${llc.name}. Heat increased!`, "lightgreen");
+}
+
+function runAiTurns() {
+    gameData.aiPlayers.forEach((ai) => {
+        ai.money += ai.goons * ai.powerLevel * 5;
+        ai.relationship = Math.max(-100, Math.min(100, ai.relationship - 0.1));
+        if (ai.strategy === 'aggressive' && ai.relationship < -50 && Math.random() < 0.1) {
+            let stolen = Math.floor(gameData.money * 0.05 * ai.powerLevel);
+            gameData.money -= stolen;
+            showNotification(`${ai.name} has attacked your operation, stealing $${stolen}!`, "red");
+        }
+    });
+}
+
+function proposeDeal(aiIndex) {
+    let ai = gameData.aiPlayers[aiIndex];
+    let cost = 10000;
+    if (gameData.money < cost) {
+        showNotification("Not enough cash to broker a deal.", "red");
+        return;
+    }
+    gameData.money -= cost;
+    if (Math.random() * 100 < (50 + ai.relationship)) {
+        ai.relationship += 25;
+        showNotification(`${ai.name} accepts the deal. Your relationship has improved.`, "lightgreen");
+    } else {
+        ai.relationship -= 15;
+        showNotification(`${ai.name} rejects your offer with contempt.`, "orange");
+    }
+}
+
+function attackAI(aiIndex) {
+    let ai = gameData.aiPlayers[aiIndex];
+    let playerPower = gameData.goons + (gameData.armsStock.handgun + gameData.armsStock.smg * 2 + gameData.armsStock.rifle * 3);
+    let aiPower = ai.goons * ai.powerLevel;
+    if (playerPower > aiPower) {
+        let stolen = Math.floor(ai.money * 0.2);
+        gameData.money += stolen;
+        ai.relationship -= 50;
+        ai.powerLevel += 0.2;
+        showNotification(`Successful raid on ${ai.name}! You stole $${stolen}. They won't forget this.`, "#00ffff");
+    } else {
+        let lost = Math.floor(gameData.money * 0.1);
+        gameData.money -= lost;
+        gameData.heat += 20;
+        showNotification(`Your attack on ${ai.name} failed! You lost $${lost}.`, "red");
+    }
+}
+
+function updateGoonSystem() {
+    if (gameData.goons <= 0) return;
+    gameData.payrollDue--;
+    if (gameData.payrollDue <= 0) {
+        let payrollCost = gameData.goons * 50;
+        if (gameData.money >= payrollCost) {
+            gameData.money -= payrollCost;
+            gameData.goonLoyalty += 5;
+        } else {
+            gameData.goonLoyalty -= 20;
+            showNotification(`CAN'T PAY PAYROLL! Morale has plummeted!`, "red");
+        }
+        gameData.payrollDue = 100;
+    }
+    gameData.goonLoyalty -= 0.05;
+    if (gameData.goonLoyalty < 30 && Math.random() < 0.01) {
+        let stolen = Math.floor(gameData.money * 0.1);
+        gameData.money -= stolen;
+        showNotification(`Disloyal goons stole $${stolen} from you!`, "red");
+    }
+    if (gameData.goonLoyalty <= 0) {
+        gameData.heat += 100;
+        gameData.goons--;
+        gameData.goonLoyalty = 20;
+        showNotification(`A goon snitched to the cops and quit! MASSIVE heat increase!`, "red");
+    }
+    if (gameData.goonLoyalty > 100) gameData.goonLoyalty = 100;
+    if (gameData.goonLoyalty < 0) gameData.goonLoyalty = 0;
+}
+
+function payGoonBonus() {
+    let bonusCost = gameData.goons * 100;
+    if (gameData.goons <= 0) return;
+    if (gameData.money < bonusCost) {
+        showNotification("Not enough cash for bonuses.", "red");
+        return;
+    }
+    gameData.money -= bonusCost;
+    gameData.goonLoyalty += 15;
+    showNotification(`You paid $${bonusCost} in bonuses. Morale is very high!`, "#00ffff");
+}
+
+function establishLLC() {
+    const cost = 25000;
+    if (gameData.money < cost) return;
+    gameData.money -= cost;
+    const types = ["Car Wash", "Restaurant", "Nightclub", "Casino"];
+    const type = types[gameData.llcs.length % types.length];
+    gameData.llcs.push({ name: `${playerName}'s ${type}`, invested: 0, reputation: 0, publicInvestment: 0, risk: 0.1 });
+    showNotification("LLC established!", "#00ffff");
+}
+
+function investDirtyMoney(llcIndex, amount) {
+    if (gameData.money < amount) return;
+    gameData.money -= amount;
+    gameData.llcs[llcIndex].invested += amount;
+}
+
+function buyStock(llcIndex, stockKey, shares) {
+    if(gameData.llcs.length === 0) { showNotification("You must establish an LLC to trade stocks.", "orange"); return; }
+    let llc = gameData.llcs[llcIndex];
+    let stock = gameData.stocks[stockKey];
+    let cost = stock.price * shares;
+    if (llc.invested < cost) { showNotification("Not enough invested funds in this LLC.", "red"); return; }
+    llc.invested -= cost;
+    gameData.portfolio[stockKey] += shares;
+}
+
+function sellStock(stockKey, shares) {
+    let stock = gameData.stocks[stockKey];
+    if (gameData.portfolio[stockKey] < shares) { showNotification("Not enough shares to sell.", "red"); return; }
+    let earnings = stock.price * shares * 0.98;
+    gameData.portfolio[stockKey] -= shares;
+    gameData.whiteMoney += earnings;
+    showNotification(`Sold ${shares} shares. $${earnings.toFixed(0)} is clean.`, "lightgreen");
+}
+
+const HEIST_TARGETS = { liquor_store: { name: "Liquor Store", difficulty: 20, payout: 20000, crewSlots: ['driver'] }, bank: { name: "Federal Bank", difficulty: 75, payout: 500000, crewSlots: ['hacker', 'driver', 'demo'] }, armored_truck: { name: "Armored Truck", difficulty: 50, payout: 150000, crewSlots: ['driver', 'demo'] } };
+const SPECIALISTS = { hacker: [{ name: "Script Kiddie", skill: 10, cost: 1000 }, { name: "Pro Cypher", skill: 30, cost: 5000 }], driver: [{ name: "Street Racer", skill: 15, cost: 1500 }, { name: "Ex-Stuntman", skill: 35, cost: 7000 }], demo: [{ name: "Thug with C4", skill: 20, cost: 2500 }, { name: "Sapper", skill: 40, cost: 10000 }] };
+
+function selectHeistTarget(targetKey) {
+    gameData.heist.target = HEIST_TARGETS[targetKey];
+    gameData.heist.crew = { hacker: null, driver: null, demo: null };
+}
+
+function hireSpecialist(type, tier) {
+    const s = SPECIALISTS[type][tier];
+    if (gameData.money < s.cost) return;
+    if (!gameData.heist.target.crewSlots.includes(type)) return;
+    gameData.money -= s.cost;
+    gameData.heist.crew[type] = s;
+}
+
+function executeHeist() {
+    let t = gameData.heist.target;
+    let c = gameData.heist.crew;
+    let totalSkill = 0;
+    for (const slot of t.crewSlots) {
+        if (!c[slot]) {
+            showNotification(`Cannot start heist without a ${slot}!`, "red");
+            return;
+        }
+        totalSkill += c[slot].skill;
+    }
+    let successChance = Math.max(10, Math.min(95, 50 + totalSkill - t.difficulty));
+    if (Math.random() * 100 < successChance) {
+        gameData.money += t.payout;
+        showNotification(`SUCCESS! Got away with $${t.payout}.`, "lightgreen");
+        gameData.heat += t.difficulty / 5;
+    } else {
+        gameData.heat += t.difficulty * (1 + (100 - successChance) / 100);
+        gameData.goonLoyalty -= 25;
+        showNotification(`BOTCHED! The heist failed! Massive heat spike!`, "red");
+    }
+    gameData.heist = { target: null, crew: { hacker: null, driver: null, demo: null }, status: 'planning' };
+}
+
 
 // =================================================================================
 // SECTION 5: UI RENDERING & TABS
 // =================================================================================
+
 function showTab(tabName, event) {
     currentActiveTab = tabName;
     document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
@@ -219,17 +495,27 @@ function showTab(tabName, event) {
     document.getElementById(tabName).style.display = 'block';
     event.currentTarget.classList.add('active');
 }
+
 function updateUI() {
     if (!gameData || gameData.gameOver) return;
+    
     document.getElementById('top-stats').innerHTML = `<p>💰 Dirty: $${Math.floor(gameData.money)}</p> <p>💵 Clean: $${Math.floor(gameData.whiteMoney)}</p> <p>🔥 Heat: ${Math.floor(gameData.heat)}</p>`;
-    document.getElementById('hustle').innerHTML = `<h2>The Hustle</h2> <div class="item-list"> <p><strong>Drug Operation</strong></p> <button onclick="handleButtonClick(produceDrug)">Produce ${gameData.currentDrug}</button> <button onclick="handleButtonClick(sellDrug)">Sell Product</button> <button onclick="handleButtonClick(buyChemicals)">Buy Chemicals</button> <button onclick="handleButtonClick(upgradeStructure, 'lab')">Upgrade Lab</button> <hr> <p><strong>Arms Trafficking</strong></p> <button onclick="handleButtonClick(manufactureArms)">Manufacture Arms</button> <button onclick="handleButtonClick(sellArms)">Sell All Arms</button> <button onclick="handleButtonClick(upgradeStructure, 'workshop')">Upgrade Workshop</button> </div>`;
+    
+    document.getElementById('hustle').innerHTML = `<h2>The Hustle</h2> <div class="item-list"> <p><strong>Drug Operation</strong></p> <button onclick="handleButtonClick(produceDrug)">Produce ${gameData.currentDrug}</button> <button onclick="handleButtonClick(sellDrug)">Sell Product ($${(MARKET_DATA[gameData.currentDrug].basePrice * Math.max(0.1, 1 - (gameData.drugMarket[gameData.currentDrug].soldRecently / MARKET_DATA[gameData.currentDrug].saturation))).toFixed(2)})</button> <button onclick="handleButtonClick(buyChemicals)">Buy Chemicals</button> <button onclick="handleButtonClick(upgradeStructure, 'lab')">Upgrade Lab</button> <hr> <p><strong>Arms Trafficking</strong></p> <button onclick="handleButtonClick(manufactureArms)">Manufacture Arms</button> <button onclick="handleButtonClick(sellArms)">Sell All Arms</button> <button onclick="handleButtonClick(upgradeStructure, 'workshop')">Upgrade Workshop</button> </div>`;
+
     document.getElementById('center-panel').innerHTML = `<div class="tab-buttons"> <button class="tab-link" onclick="showTab('assets-panel', event)">Assets</button> <button class="tab-link" onclick="showTab('market-panel', event)">Stocks</button> <button class="tab-link" onclick="showTab('heists-panel', event)">Heists</button> <button class="tab-link" onclick="showTab('diplomacy-panel', event)">Diplomacy</button> </div> <div id="assets-panel" class="tab-content item-list"></div> <div id="market-panel" class="tab-content item-list"></div> <div id="heists-panel" class="tab-content"></div> <div id="diplomacy-panel" class="tab-content item-list"></div>`;
+    
     let loyaltyColor = gameData.goonLoyalty > 60 ? 'lightgreen' : gameData.goonLoyalty > 30 ? 'orange' : 'red';
     document.getElementById('stats').innerHTML = `<h2>My Operation</h2> <div class="item-list"> <p><strong>Personnel</strong></p> <p>Goons: ${gameData.goons}</p> <p style="color:${loyaltyColor};">Morale: ${gameData.goonLoyalty.toFixed(1)}%</p> <p>Next Payroll: ${gameData.payrollDue}s</p> <button onclick="handleButtonClick(buyGoon)">Recruit Goon</button> <button onclick="handleButtonClick(payGoonBonus)">Pay Bonus</button> <hr> <p><strong>Inventory</strong></p> <p>${gameData.currentDrug}: ${Math.floor(gameData.drugs)}</p> <p>Chemicals: ${gameData.chemicals}</p> <p>Handguns: ${gameData.armsStock.handgun}</p> <p>SMGs: ${gameData.armsStock.smg}</p> <p>Rifles: ${gameData.armsStock.rifle}</p> </div>`;
+
     let assetsHTML = ``; if (gameData.llcs.length === 0) { assetsHTML += `<p>Establish an LLC to launder money.</p>`; } else { gameData.llcs.forEach((llc, index) => { assetsHTML += `<div class="list-item"> <strong>${llc.name}</strong> <p>Rep: ${llc.reputation.toFixed(1)} | Pub. Funds: $${Math.floor(llc.publicInvestment)}</p> <p>Invested Dirty: $${Math.floor(llc.invested)}</p> <button onclick="handleButtonClick(investDirtyMoney, ${index}, 1000)">Invest $1k</button> <button onclick="handleButtonClick(skimLaunderedFunds, ${index})">Skim 10%</button> </div>`; }); } assetsHTML += `<button onclick="handleButtonClick(establishLLC)">Establish LLC ($25,000)</button>`; document.getElementById('assets-panel').innerHTML = assetsHTML;
+    
     let marketHTML = ``; for (const key in gameData.stocks) { let stock = gameData.stocks[key]; let trendClass = stock.trend >= 0 ? 'stock-up' : 'stock-down'; let trendSign = stock.trend >= 0 ? '▲' : '▼'; marketHTML += `<div class="stock-item"> <div class="stock-info"><span>${stock.name}: $${stock.price.toFixed(2)}</span> <span class="${trendClass}">${trendSign} ${Math.abs(stock.trend).toFixed(2)}</span> </div> ${generateSparklineSVG(stock.priceHistory)} </div><p>Shares: ${gameData.portfolio[key]}</p><div><button onclick="handleButtonClick(buyStock, 0, '${key}', 1)">Buy</button><button onclick="handleButtonClick(sellStock, '${key}', 1)">Sell</button></div>`; } document.getElementById('market-panel').innerHTML = marketHTML;
+    
     let diplomacyHTML = ``; gameData.aiPlayers.forEach((ai, index) => { let relPercent = (ai.relationship + 100) / 2; diplomacyHTML += `<div class="list-item"> <strong>${ai.name}</strong> (Pwr: ${ai.powerLevel.toFixed(1)}) <div class="relationship-bar"><div class="relationship-fill" style="width:${relPercent}%;"></div></div> <button onclick="handleButtonClick(proposeDeal, ${index})">Deal ($10k)</button> <button onclick="handleButtonClick(attackAI, ${index})">Attack</button> </div>`; }); document.getElementById('diplomacy-panel').innerHTML = diplomacyHTML;
+    
     let heistHTML = ``; if (!gameData.heist.target) { heistHTML += `<p>Select a target.</p> <button onclick="handleButtonClick(selectHeistTarget, 'liquor_store')">Liquor Store</button> <button onclick="handleButtonClick(selectHeistTarget, 'armored_truck')">Armored Truck</button> <button onclick="handleButtonClick(selectHeistTarget, 'bank')">Fed. Bank</button>`; } else { let target = gameData.heist.target; let crew = gameData.heist.crew; heistHTML += `<h3>Target: ${target.name}</h3><p>Payout: $${target.payout} | Diff: ${target.difficulty}</p><div class="item-list">`; let canExecute = true; target.crewSlots.forEach(slot => { heistHTML += `<p><strong>${slot.charAt(0).toUpperCase() + slot.slice(1)}:</strong>`; if (crew[slot]) { heistHTML += ` <span style="color:lightgreen;">${crew[slot].name}</span></p>`; } else { canExecute = false; heistHTML += ` <span style="color:orange;">None</span></p>`; SPECIALISTS[slot].forEach((specialist, index) => { heistHTML += `<button onclick="handleButtonClick(hireSpecialist, '${slot}', ${index})">${specialist.name} ($${specialist.cost})</button>`; }); } }); heistHTML += `</div><button onclick="handleButtonClick(executeHeist)" ${canExecute ? '' : 'disabled'}>EXECUTE HEIST</button>`; } document.getElementById('heists-panel').innerHTML = heistHTML;
+    
     document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
     document.querySelectorAll('.tab-link').forEach(link => link.classList.remove('active'));
     document.getElementById(currentActiveTab).style.display = 'block';
