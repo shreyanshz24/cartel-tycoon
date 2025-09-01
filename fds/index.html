@@ -351,11 +351,6 @@
     window.startResearch = startResearch;
     window.sendSpyMission = sendSpyMission;
     window.buyProperty = buyProperty;
-    window.showMainMenu = showMainMenu;
-    window.startNewGame = startNewGame;
-    window.loadGame = loadGame;
-    window.showCredits = showCredits;
-    window.createCustomDrug = createCustomDrug;
 
     document.getElementById('startGameBtn').addEventListener('click', () => startGame('single'));
 
@@ -573,38 +568,6 @@
         } else { showNotification(`Need $${cost} to upgrade lab.`, "orange"); }
     }
 
-    // --- Fix 5: Custom Drug Creation ---
-    function createCustomDrug(name) {
-        if (!name) return;
-        const addictiveness = parseFloat(Math.random().toFixed(2));   // 0.00 - 1.00
-        const basePrice = 100 + Math.floor(Math.random() * 400);
-
-        if (!gameData.customDrugs) gameData.customDrugs = [];
-        gameData.customDrugs.push({
-            name,
-            addictiveness,
-            basePrice,
-            demand: Math.floor(50 + addictiveness * 100)
-        });
-
-        showNotification(`${name} created! Addictiveness: ${addictiveness}`, "lightgreen");
-        updateUI();
-    }
-
-    // Add button to UI when lab exists
-    function addCustomDrugButton() {
-        if (gameData.labLevel > 0) {
-            const operationsPanel = document.getElementById('operations');
-            const existingBtn = operationsPanel.querySelector('[onclick*="createCustomDrug"]');
-            if (!existingBtn) {
-                const btn = document.createElement('button');
-                btn.textContent = "Create New Drug";
-                btn.onclick = () => createCustomDrug(prompt("Enter drug name:"));
-                operationsPanel.appendChild(btn);
-            }
-        }
-    }
-
     function upgradeWorkshop() { showNotification("Workshop feature coming soon.", "lightblue"); }
     function manufactureArms() { showNotification("Arms feature coming soon.", "lightblue"); }
     function sellArms() { showNotification("Arms feature coming soon.", "lightblue"); }
@@ -637,42 +600,6 @@
         gameData.personnel.soldiers = Math.max(0, gameData.personnel.soldiers - defensePower);
         showNotification("Your attack failed! You lost soldiers.", "red");
       }
-      checkPhaseTransition();
-    }
-
-    // --- Fix 4: Phase Transition ---
-    function playerControlsAllTerritories() {
-        return gameData.territories.every(t => t.owner === 'Player');
-    }
-
-    function checkPhaseTransition() {
-        if (playerControlsAllTerritories() && !gameData.cityControlled) {
-            gameData.cityControlled = true;
-            showPhaseChoice();
-        }
-    }
-
-    function showPhaseChoice() {
-        let choice = confirm("You now control the city. Do you want to compete for PRODUCTION or DISTRIBUTION of high-end drugs?");
-        if (choice) {
-            gameData.nextPhase = "production";
-            loadNewMap("production");
-        } else {
-            gameData.nextPhase = "distribution";
-            loadNewMap("distribution");
-        }
-    }
-
-    function loadNewMap(phase) {
-        // Example: reset territories for new city map
-        const newTerritories = [];
-        const territoryNames = ["Downtown", "Uptown", "Harbor", "Chinatown", "Financial District", "Suburbs", "Industrial Zone", "Old Quarter", "Airport", "Casino Strip"];
-        for (let i = 0; i < territoryNames.length; i++) {
-            newTerritories.push({ id: i, name: territoryNames[i], owner: 'Neutral', value: Math.floor(Math.random()*50)+50, soldiers: Math.floor(Math.random()*5), lieutenant: -1, business: null });
-        }
-        gameData.territories = newTerritories;
-        showNotification(`Phase "${phase.toUpperCase()}" started! New city map loaded.`, "lightgreen");
-        updateUI();
     }
 
     function buyProperty(name, cost, cleanRate) {
@@ -704,7 +631,7 @@
         gameData.money -= moneyLost;
         const dealersLost = Math.min(gameData.personnel.dealers, 2);
         gameData.personnel.dealers -= dealersLost;
-        showNotification(`You lost ${moneyLost} and ${dealersLost} dealers!`, "red");
+        showNotification(`You lost $${moneyLost} and ${dealersLost} dealers!`, "red");
         if (gameData.heat >= 200) { triggerGameOver("The raid was too much! You're BUSTED!"); }
     }
 
@@ -731,7 +658,7 @@
     function startResearch(researchId) {
         if (gameData.researchInProgress) { showNotification("Research already in progress.", "orange"); return; }
         const r = gameData.research[researchId];
-        if (gameData.whiteMoney < r.cost) { showNotification(`Need ${r.cost} in clean money for research.`, "orange"); return; }
+        if (gameData.whiteMoney < r.cost) { showNotification(`Need $${r.cost} in clean money for research.`, "orange"); return; }
         const requirementMet = r.requires ? gameData.research[r.requires].unlocked : true;
         if (!requirementMet) { showNotification("Previous technology not researched yet.", "orange"); return; }
         gameData.whiteMoney -= r.cost;
@@ -764,47 +691,7 @@
     }
 
     // =================================================================================
-    // SECTION 9: MAIN MENU SYSTEM
-    // =================================================================================
-    function showMainMenu() {
-        document.getElementById("center-panel").innerHTML = `
-            <h1 style="font-family:Impact; font-size:40px; color:red; text-shadow:2px 2px black;">
-                Grand Theft Auto: Empire Tycoon
-            </h1>
-            <button onclick="startNewGame()">Start New Game</button>
-            <button onclick="loadGame()">Load Game</button>
-            <button onclick="showCredits()">Credits</button>
-        `;
-    }
-
-    function startNewGame() {
-        document.getElementById("game").style.display = "block";
-        resetGameData();
-        updateUI();
-    }
-
-    function loadGame() {
-        document.getElementById("game").style.display = "block";
-        const savedData = localStorage.getItem("saveData");
-        if (savedData) {
-            gameData = JSON.parse(savedData);
-        } else {
-            gameData = {};
-            resetGameData();
-        }
-        updateUI();
-    }
-
-    function showCredits() {
-        document.getElementById("center-panel").innerHTML = `
-            <h2>Credits</h2>
-            <p>Game by Shreyansh</p>
-            <button onclick="showMainMenu()">Back to Menu</button>
-        `;
-    }
-
-    // =================================================================================
-    // SECTION 10: UI RENDERING
+    // SECTION 9: UI RENDERING
     // =================================================================================
     function showTab(tabName, event) { currentActiveTab = tabName; updateUI(); }
     function showSubTab(tabName, event) { currentActiveSubTab = tabName; updateUI(); }
@@ -814,26 +701,20 @@
 
     // --- Top Stats ---
     document.getElementById('top-stats').innerHTML = `
-        <p>💰 Dirty: ${Math.floor(gameData.money)}</p>
-        <p>💵 Clean: ${Math.floor(gameData.whiteMoney)}</p>
+        <p>💰 Dirty: $${Math.floor(gameData.money)}</p>
+        <p>💵 Clean: $${Math.floor(gameData.whiteMoney)}</p>
         <p>🔥 Heat: ${Math.floor(gameData.heat)}</p>
     `;
 
     // --- Operations Panel ---
-    let operationsHTML = `
+    document.getElementById('operations').innerHTML = `
         <h2>Operations</h2>
         <div class="item-list">
             <h3>Drug Operation</h3>
             <p>Current Production: ${gameData.currentDrug.toUpperCase()}</p>
             <button onclick="handleButtonClick(upgradeLab)">
                 Upgrade Lab (Lvl ${gameData.labLevel})
-            </button>`;
-    
-    if (gameData.labLevel > 0) {
-        operationsHTML += `<button onclick="handleButtonClick(createCustomDrug, prompt('Enter drug name:'))">Create New Drug</button>`;
-    }
-    
-    operationsHTML += `
+            </button>
             <h3>Arms Trafficking</h3>
             <p>Workshop Tier: ${gameData.armsTier}</p>
             <button onclick="handleButtonClick(upgradeWorkshop)">Upgrade Workshop</button>
@@ -844,51 +725,28 @@
             <button onclick="handleButtonClick(fightBack)">Fight Back</button>
         </div>
     `;
-    
-    document.getElementById('operations').innerHTML = operationsHTML;
 
     // --- Center Panel Tabs ---
     document.getElementById('center-panel').innerHTML = `
         <div class="tab-buttons">
-            <button class="tab-link ${currentActiveTab === 'map-panel' ? 'active' : ''}" onclick="showTab('map-panel', event)">Map</button>
-            <button class="tab-link ${currentActiveTab === 'management-panel' ? 'active' : ''}" onclick="showTab('management-panel', event)">Management</button>
-            <button class="tab-link ${currentActiveTab === 'llc-panel' ? 'active' : ''}" onclick="showTab('llc-panel', event)">LLC</button>
-            <button class="tab-link ${currentActiveTab === 'research-panel' ? 'active' : ''}" onclick="showTab('research-panel', event)">Research</button>
-            <button class="tab-link ${currentActiveTab === 'espionage-panel' ? 'active' : ''}" onclick="showTab('espionage-panel', event)">Espionage</button>
+            <button class="tab-link" onclick="showTab('map-panel', event)">Map</button>
+            <button class="tab-link" onclick="showTab('management-panel', event)">Management</button>
+            <button class="tab-link" onclick="showTab('llc-panel', event)">LLC</button>
+            <button class="tab-link" onclick="showTab('research-panel', event)">Research</button>
+            <button class="tab-link" onclick="showTab('espionage-panel', event)">Espionage</button>
         </div>
-        <div id="map-panel" class="tab-content ${currentActiveTab === 'map-panel' ? 'active' : ''}"></div>
-        <div id="management-panel" class="tab-content ${currentActiveTab === 'management-panel' ? 'active' : ''}"></div>
-        <div id="llc-panel" class="tab-content ${currentActiveTab === 'llc-panel' ? 'active' : ''}"></div>
-        <div id="research-panel" class="tab-content ${currentActiveTab === 'research-panel' ? 'active' : ''}"></div>
-        <div id="espionage-panel" class="tab-content ${currentActiveTab === 'espionage-panel' ? 'active' : ''}"></div>
+        <div id="map-panel" class="tab-content"></div>
+        <div id="management-panel" class="tab-content"></div>
+        <div id="llc-panel" class="tab-content"></div>
+        <div id="research-panel" class="tab-content"></div>
+        <div id="espionage-panel" class="tab-content"></div>
     `;
-
-    // --- Research Panel ---
-    let researchHTML = `<h2>Research & Development</h2><p>Clean Money: ${Math.floor(gameData.whiteMoney)}</p>`;
-    if (gameData.researchInProgress) {
-        const r = gameData.research[gameData.researchInProgress];
-        researchHTML += `<p><strong>In Progress:</strong> ${r.name} (${r.progress}/${r.time})</p>`;
-    }
-    researchHTML += `<hr/><h3>Available Research</h3>`;
-    Object.keys(gameData.research).forEach(key => {
-        const r = gameData.research[key];
-        const canResearch = !r.unlocked && (!r.requires || gameData.research[r.requires].unlocked);
-        const status = r.unlocked ? 'COMPLETE' : canResearch ? 'Available' : 'Locked';
-        researchHTML += `
-            <div class="list-item">
-                <strong>${r.name}</strong> - ${r.cost}
-                <p>${r.desc}</p>
-                <p>Status: ${status}</p>
-                ${canResearch && !gameData.researchInProgress ? `<button onclick="handleButtonClick(startResearch, '${key}')">Research</button>` : ''}
-            </div>`;
-    });
-    document.getElementById('research-panel').innerHTML = researchHTML;
 
     // --- Espionage Panel ---
     document.getElementById('espionage-panel').innerHTML = `
         <h2>Espionage</h2>
         <p>Spies Available: ${gameData.personnel.spies}</p>
-        <button onclick="handleButtonClick(hirePersonnel, 'spy')">Hire Spy ($25,000)</button>
+        <button onclick="handleButtonClick(hirePersonnel, 'spy')">Hire Spy($25,000)</button>
         <hr/>
         <h3>Missions</h3>
         <button onclick="handleButtonClick(sendSpyMission, 'intel')">Steal Intel</button>
@@ -897,7 +755,7 @@
     `;
 
     // --- LLC Panel ---
-    let propertiesHTML = gameData.properties ? gameData.properties.map(p => `<p><strong>${p.name}</strong> (Cleans ${p.cleanRate}/tick)</p>`).join('') : '';
+    let propertiesHTML = gameData.properties.map(p => `<p><strong>${p.name}</strong> (Cleans $${p.cleanRate}/tick)</p>`).join('');
     document.getElementById('llc-panel').innerHTML = `
         <h2>Property Laundering</h2>
         <p>Buy businesses to clean dirty money.</p>
@@ -906,9 +764,9 @@
         <div class="item-list">${propertiesHTML || '<p>None</p>'}</div>
         <hr/>
         <h3>For Sale</h3>
-        <button onclick="handleButtonClick(buyProperty, 'Car Wash', 20000, 500)">Car Wash ($20,000)</button>
-        <button onclick="handleButtonClick(buyProperty, 'Nightclub', 100000, 2500)">Nightclub ($100,000)</button>
-        <button onclick="handleButtonClick(buyProperty, 'Casino', 1000000, 20000)">Casino ($1,000,000)</button>
+        <button onclick="buyProperty('Car Wash', 20000, 500)">Car Wash ($20,000)</button>
+        <button onclick="buyProperty('Nightclub', 100000, 2500)">Nightclub ($100,000)</button>
+        <button onclick="buyProperty('Casino', 1000000, 20000)">Casino ($1,000,000)</button>
     `;
 
     // --- Personnel / Empire Stats ---
@@ -927,7 +785,7 @@
             <hr/>
             <h3>Victory Progress</h3>
             <p>Domination: ${gameData.victory.domination.current}/${gameData.victory.domination.required} Territories</p>
-            <p>Economic: ${Math.floor(gameData.victory.economic.current)}/${gameData.victory.economic.required}</p>
+            <p>Economic: $${Math.floor(gameData.victory.economic.current)}/$${gameData.victory.economic.required}</p>
         </div>
     `;
 
@@ -949,11 +807,11 @@
     // --- Management Panel ---
     document.getElementById('management-panel').innerHTML = `
         <div class="tab-buttons">
-            <button class="tab-link ${currentActiveSubTab === 'lieutenants-subpanel' ? 'active' : ''}" onclick="showSubTab('lieutenants-subpanel', event)">Lieutenants</button>
-            <button class="tab-link ${currentActiveSubTab === 'diplomacy-subpanel' ? 'active' : ''}" onclick="showSubTab('diplomacy-subpanel', event)">Diplomacy</button>
+            <button class="tab-link" onclick="showSubTab('lieutenants-subpanel', event)">Lieutenants</button>
+            <button class="tab-link" onclick="showSubTab('diplomacy-subpanel', event)">Diplomacy</button>
         </div>
-        <div id="lieutenants-subpanel" class="tab-content item-list ${currentActiveSubTab === 'lieutenants-subpanel' ? 'active' : ''}"></div>
-        <div id="diplomacy-subpanel" class="tab-content item-list ${currentActiveSubTab === 'diplomacy-subpanel' ? 'active' : ''}"></div>
+        <div id="lieutenants-subpanel" class="tab-content item-list"></div>
+        <div id="diplomacy-subpanel" class="tab-content item-list"></div>
     `;
 
     // Lieutenants Subpanel
@@ -984,15 +842,70 @@
             </div>`;
     });
     document.getElementById('diplomacy-subpanel').innerHTML = diplomacyHTML;
+
+    // --- Research Panel ---
+    let researchHTML = `<h2>Research & Development</h2>`;
+    if (gameData.researchInProgress) {
+        const r = gameData.research[gameData.researchInProgress];
+        researchHTML += `<p>Research in Progress: ${r.name} (${Math.floor((r.progress / r.time) * 100)}%)</p>`;
+    }
+    researchHTML += `<div class="item-list">`;
+    for (const [key, research] of Object.entries(gameData.research)) {
+        const canResearch = !research.unlocked && !gameData.researchInProgress && 
+                           (!research.requires || gameData.research[research.requires].unlocked);
+        researchHTML += `
+            <div class="list-item">
+                <strong>${research.name}</strong>
+                <p>${research.desc}</p>
+                <p>Cost: $${research.cost} clean money</p>
+                <p>Time: ${research.time} seconds</p>
+                <button onclick="handleButtonClick(startResearch, '${key}')" 
+                        ${canResearch ? '' : 'disabled'}>
+                    ${research.unlocked ? 'Researched' : canResearch ? 'Research' : 'Locked'}
+                </button>
+            </div>`;
+    }
+    researchHTML += `</div>`;
+    document.getElementById('research-panel').innerHTML = researchHTML;
+
+    // Activate the current tab
+    document.querySelectorAll('.tab-link').forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.textContent.toLowerCase().includes(currentActiveTab)) {
+            tab.classList.add('active');
+        }
+    });
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+        if (content.id === currentActiveTab) {
+            content.classList.add('active');
+        }
+    });
+}
+
+    // =================================================================================
+    // SECTION 10: UTILITIES
+    // =================================================================================
+    function triggerGameOver(message) { 
+        gameData.gameOver = true; 
+        clearInterval(gameLoopInterval); 
+        document.getElementById('gameOverText').textContent = message; 
+        document.getElementById('gameOverScreen').style.display = 'flex'; 
+    }
+    
+    function showNotification(msg, color = "#0f0") { 
+        const n = document.createElement("div"); 
+        n.textContent = msg; 
+        n.style.color = "black"; 
+        n.style.background = color; 
+        n.style.padding = "5px 10px"; 
+        n.style.borderRadius = "5px"; 
+        n.style.marginTop = "5px"; 
+        document.getElementById('notifications').appendChild(n); 
+        setTimeout(() => n.remove(), 4000); 
     }
 
-    // =================================================================================
-    // SECTION 11: UTILITIES
-    // =================================================================================
-    function triggerGameOver(message) { gameData.gameOver = true; clearInterval(gameLoopInterval); document.getElementById('gameOverText').textContent = message; document.getElementById('gameOverScreen').style.display = 'flex'; }
-    function showNotification(msg, color = "#0f0") { const n = document.createElement("div"); n.textContent = msg; n.style.color = "black"; n.style.background = color; n.style.padding = "5px 10px"; n.style.borderRadius = "5px"; n.style.marginTop = "5px"; document.getElementById('notifications').appendChild(n); setTimeout(() => n.remove(), 4000); }
-
-    });
+    }); // This closes the DOMContentLoaded event listener
   </script>
 </body>
 
