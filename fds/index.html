@@ -364,14 +364,14 @@
 
     function resetGameData(aiCount = 2) {
       gameData = {
-        money: 5000, whiteMoney: 0, heat: 0,
+        money: 7500, whiteMoney: 0, heat: 0,
         inventory: { weed: 10, meth: 0, coke: 0, heroin: 0, fentanyl: 0, chemicals: 0 },
         armsStock: { handgun: 0, smg: 0, rifle: 0 },
         labLevel: 0, armsTier: 0, currentDrug: "weed",
-        personnel: { producers: 0, dealers: 5, soldiers: 2, spies: 0 },
+        personnel: { producers: 0, dealers: 0, soldiers: 0, spies: 0 },
         lieutenants: [],
         properties: [],
-        personnelLoyalty: 70,
+        personnelLoyalty: 75,
         territories: [],
         aiPlayers: [],
         research: {
@@ -566,6 +566,35 @@
             gameData.currentDrug = drugs[gameData.labLevel];
             showNotification(`Lab upgraded to produce ${gameData.currentDrug}!`, "lightgreen");
         } else { showNotification(`Need $${cost} to upgrade lab.`, "orange"); }
+      // --- Fix 5: Custom Drug Creation ---
+function createCustomDrug(name) {
+    if (!name) return;
+    const addictiveness = parseFloat(Math.random().toFixed(2));   // 0.00 - 1.00
+    const basePrice = 100 + Math.floor(Math.random() * 400);
+
+    if (!gameData.customDrugs) gameData.customDrugs = [];
+    gameData.customDrugs.push({
+        name,
+        addictiveness,
+        basePrice,
+        demand: Math.floor(50 + addictiveness * 100)
+    });
+
+    showNotification(`${name} created! Addictiveness: ${addictiveness}`, "lightgreen");
+    updateUI();
+}
+
+// Add button to UI when lab exists
+function addCustomDrugButton() {
+    if (gameData.labLevel > 0) {
+        const operationsPanel = document.getElementById('operations');
+        const btn = document.createElement('button');
+        btn.textContent = "Create New Drug";
+        btn.onclick = () => createCustomDrug(prompt("Enter drug name:"));
+        operationsPanel.appendChild(btn);
+    }
+}
+
     }
 
     function upgradeWorkshop() { showNotification("Workshop feature coming soon.", "lightblue"); }
@@ -600,7 +629,43 @@
         gameData.personnel.soldiers = Math.max(0, gameData.personnel.soldiers - defensePower);
         showNotification("Your attack failed! You lost soldiers.", "red");
       }
+      checkPhaseTransition();
     }
+      // --- Fix 4: Phase Transition ---
+function playerControlsAllTerritories() {
+    return gameData.territories.every(t => t.owner === 'Player');
+}
+
+function checkPhaseTransition() {
+    if (playerControlsAllTerritories() && !gameData.cityControlled) {
+        gameData.cityControlled = true;
+        showPhaseChoice();
+    }
+}
+
+function showPhaseChoice() {
+    let choice = confirm("You now control the city. Do you want to compete for PRODUCTION or DISTRIBUTION of high-end drugs?");
+    if (choice) {
+        gameData.nextPhase = "production";
+        loadNewMap("production");
+    } else {
+        gameData.nextPhase = "distribution";
+        loadNewMap("distribution");
+    }
+}
+
+function loadNewMap(phase) {
+    // Example: reset territories for new city map
+    const newTerritories = [];
+    const territoryNames = ["Downtown", "Uptown", "Harbor", "Chinatown", "Financial District", "Suburbs", "Industrial Zone", "Old Quarter", "Airport", "Casino Strip"];
+    for (let i = 0; i < territoryNames.length; i++) {
+        newTerritories.push({ id: i, name: territoryNames[i], owner: 'Neutral', value: Math.floor(Math.random()*50)+50, soldiers: Math.floor(Math.random()*5), lieutenant: -1, business: null });
+    }
+    gameData.territories = newTerritories;
+    showNotification(`Phase "${phase.toUpperCase()}" started! New city map loaded.`, "lightgreen");
+    updateUI();
+}
+
 
     function buyProperty(name, cost, cleanRate) {
       if (gameData.money < cost) { showNotification("Not enough dirty money!", "orange"); return; }
@@ -637,8 +702,8 @@
 
     function runAiTurns() {
         gameData.aiPlayers.forEach(ai => {
-            ai.money += 500 * ai.powerLevel;
-            if (Math.random() > 0.8) { 
+            ai.money += 100 * ai.powerLevel;
+            if (Math.random() > 0.97) { 
                 const weakTerritories = gameData.territories.filter(t => t.owner !== ai.id && t.soldiers < (ai.powerLevel * 2));
                 if (weakTerritories.length > 0) {
                     const target = weakTerritories[Math.floor(Math.random() * weakTerritories.length)];
@@ -693,75 +758,214 @@
     // =================================================================================
     // SECTION 9: UI RENDERING
     // =================================================================================
+      <!-- Main Menu -->
+<div id="mainMenu" style="display:block; text-align:center; padding:20px;">
+    <h1>Drug Empire</h1>
+
+    <label for="playerName">Your Name:</label>
+    <input type="text" id="playerName" placeholder="Enter your name"><br><br>
+
+    <label for="numAi">Number of AI Opponents:</label>
+    <select id="numAi">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+    </select><br><br>
+</div>
+
+<!-- Game UI -->
+<div id="gameUI" style="display:none;">
+   <!-- your existing game UI goes here -->
+</div>
+    function showMainMenu() {
+    document.getElementById("center-panel").innerHTML = `
+        <h1 style="font-family:Impact; font-size:40px; color:red; text-shadow:2px 2px black;">
+            Grand Theft Auto: Empire Tycoon
+        </h1>
+        <button onclick="startNewGame()">Start New Game</button>
+        <button onclick="loadGame()">Load Game</button>
+        <button onclick="showCredits()">Credits</button>
+    `;
+}
+
+function startNewGame() {
+    document.getElementById("gameUI").style.display = "block"; // show game UI
+    gameData = createNewGame(); // however you initialize
+    updateUI();
+}
+
+function loadGame() {
+    document.getElementById("gameUI").style.display = "block"; // show game UI
+    gameData = JSON.parse(localStorage.getItem("saveData"));
+    updateUI();
+}
+
+function showCredits() {
+    document.getElementById("center-panel").innerHTML = `
+        <h2>Credits</h2>
+        <p>Game by Shreyansh</p>
+        <button onclick="showMainMenu()">Back to Menu</button>
+    `;
+}
+
+
     function showTab(tabName, event) { currentActiveTab = tabName; updateUI(); }
     function showSubTab(tabName, event) { currentActiveSubTab = tabName; updateUI(); }
 
     function updateUI() {
       if (!gameData || !gameData.territories || gameData.gameOver) return;
+    window.onload = () => {
+    showMainMenu();
+};
 
-      document.getElementById('top-stats').innerHTML = `<p>💰 Dirty: $${Math.floor(gameData.money)}</p> <p>💵 Clean: $${Math.floor(gameData.whiteMoney)}</p> <p>🔥 Heat: ${Math.floor(gameData.heat)}</p>`;
-      document.getElementById('operations').innerHTML = `<h2>Operations</h2> <div class="item-list"> <h3>Drug Operation</h3> <p>Current Production: ${gameData.currentDrug.toUpperCase()}</p> <button onclick="handleButtonClick(upgradeLab)">Upgrade Lab (Lvl ${gameData.labLevel})</button> <h3>Arms Trafficking</h3> <p>Workshop Tier: ${gameData.armsTier}</p> <button onclick="handleButtonClick(upgradeWorkshop)">Upgrade Workshop</button> <h3>Law Enforcement</h3> <button onclick="handleButtonClick(fightBack)">Fight Back</button></div>`;
+    // --- Top Stats ---
+    document.getElementById('top-stats').innerHTML = `
+        <p>💰 Dirty: $${Math.floor(gameData.money)}</p>
+        <p>💵 Clean: $${Math.floor(gameData.whiteMoney)}</p>
+        <p>🔥 Heat: ${Math.floor(gameData.heat)}</p>
+    `;
 
-      document.getElementById('center-panel').innerHTML = `<div class="tab-buttons"> <button class="tab-link" onclick="showTab('map-panel', event)">Map</button> <button class="tab-link" onclick="showTab('management-panel', event)">Management</button> <button class="tab-link" onclick="showTab('llc-panel', event)">LLC</button> <button class="tab-link" onclick="showTab('research-panel', event)">Research</button> <button class="tab-link" onclick="showTab('espionage-panel', event)">Espionage</button> </div> <div id="map-panel" class="tab-content"></div> <div id="management-panel" class="tab-content"></div> <div id="llc-panel" class="tab-content"></div> <div id="research-panel" class="tab-content"></div> <div id="espionage-panel" class="tab-content"></div>`;
-      
-      let espionagePanelHTML = `<h2>Espionage</h2><p>Spies Available: ${gameData.personnel.spies}</p><button onclick="handleButtonClick(hirePersonnel, 'spy')">Hire Spy ($25,000)</button><hr/><h3>Missions</h3><button onclick="handleButtonClick(sendSpyMission, 'intel')">Steal Intel</button><button onclick="handleButtonClick(sendSpyMission, 'cops')">Bribe Cops</button><button onclick="handleButtonClick(sendSpyMission, 'rival')">Sabotage Rival</button>`;
-      document.getElementById('espionage-panel').innerHTML = espionagePanelHTML;
+    // --- Operations Panel ---
+    document.getElementById('operations').innerHTML = `
+        <h2>Operations</h2>
+        <div class="item-list">
+            <h3>Drug Operation</h3>
+            <p>Current Production: ${gameData.currentDrug.toUpperCase()}</p>
+            <button onclick="handleButtonClick(upgradeLab)">
+                Upgrade Lab (Lvl ${gameData.labLevel})
+            </button>
+            addCustomDrugButton();
+            <h3>Arms Trafficking</h3>
+            <p>Workshop Tier: ${gameData.armsTier}</p>
+            <button onclick="handleButtonClick(upgradeWorkshop)">Upgrade Workshop</button>
+            <button onclick="handleButtonClick(manufactureArms)">Manufacture Arms</button>
+            <button onclick="handleButtonClick(sellArms)">Sell Arms</button>
 
-      let llcHTML = `<h2>Property Laundering</h2><p>Buy businesses to clean dirty money.</p><div class="item-list"></div>`;
-      let propertiesHTML = gameData.properties.map(p => `<p><strong>${p.name}</strong> (Cleans $${p.cleanRate}/tick)</p>`).join('');
-      let propertyButtonsHTML = `<button onclick="buyProperty('Car Wash', 20000, 500)">Car Wash ($20,000)</button><button onclick="buyProperty('Nightclub', 100000, 2500)">Nightclub ($100,000)</button><button onclick="buyProperty('Casino', 1000000, 20000)">Casino ($1,000,000)</button>`;
-      document.getElementById('llc-panel').innerHTML = `<h2>Property Laundering</h2><p>Buy businesses to clean dirty money.</p><hr><h3>Your Properties</h3><div class="item-list">${propertiesHTML || '<p>None</p>'}</div><hr><h3>For Sale</h3>${propertyButtonsHTML}`;
+            <h3>Law Enforcement</h3>
+            <button onclick="handleButtonClick(fightBack)">Fight Back</button>
+        </div>
+    `;
 
-      let loyaltyColor = gameData.personnelLoyalty > 60 ? 'lightgreen' : gameData.personnelLoyalty > 30 ? 'orange' : 'red';
-      document.getElementById('personnel-inventory').innerHTML = `<h2>Empire Stats</h2> <div class="item-list"><h3>Personnel</h3> <p><strong>Morale: <span style="color:${loyaltyColor};">${gameData.personnelLoyalty.toFixed(1)}%</span></strong></p> <p>Producers: ${gameData.personnel.producers}</p> <button onclick="handleButtonClick(hirePersonnel, 'producer')">Hire ($500)</button> <p>Dealers: ${gameData.personnel.dealers}</p> <button onclick="handleButtonClick(hirePersonnel, 'dealer')">Hire ($750)</button><p>Soldiers: ${gameData.personnel.soldiers}</p><button onclick="handleButtonClick(hirePersonnel, 'soldier')">Hire ($1000)</button><hr><h3>Victory Progress</h3><p>Domination: ${gameData.victory.domination.current}/${gameData.victory.domination.required} Territories</p><p>Economic: $${Math.floor(gameData.victory.economic.current)}/$${gameData.victory.economic.required}</p></div>`;
+    // --- Center Panel Tabs ---
+    document.getElementById('center-panel').innerHTML = `
+        <div class="tab-buttons">
+            <button class="tab-link" onclick="showTab('map-panel', event)">Map</button>
+            <button class="tab-link" onclick="showTab('management-panel', event)">Management</button>
+            <button class="tab-link" onclick="showTab('llc-panel', event)">LLC</button>
+            <button class="tab-link" onclick="showTab('research-panel', event)">Research</button>
+            <button class="tab-link" onclick="showTab('espionage-panel', event)">Espionage</button>
+        </div>
+        <div id="map-panel" class="tab-content"></div>
+        <div id="management-panel" class="tab-content"></div>
+        <div id="llc-panel" class="tab-content"></div>
+        <div id="research-panel" class="tab-content"></div>
+        <div id="espionage-panel" class="tab-content"></div>
+    `;
 
-      let mapHTML = `<h2>City Map</h2><p>Click a territory to attack.</p><div id="map-grid">`;
-      const ownerColors = { 'Player': 'player', 'AI-1': 'ai-1', 'AI-2': 'ai-2', 'AI-3': 'ai-3', 'Neutral': 'neutral' };
-      gameData.territories.forEach(t => { mapHTML += `<div class="territory ${ownerColors[t.owner] || 'neutral'}-controlled" onclick="handleButtonClick(attackTerritory, ${t.id})"><span>${t.name}</span><span>${t.owner}</span><span>⚔️ ${t.soldiers}</span></div>`; });
-      mapHTML += `</div>`;
-      document.getElementById('map-panel').innerHTML = mapHTML;
+    // --- Espionage Panel ---
+    document.getElementById('espionage-panel').innerHTML = `
+        <h2>Espionage</h2>
+        <p>Spies Available: ${gameData.personnel.spies}</p>
+        <button onclick="handleButtonClick(hirePersonnel, 'spy')">Hire Spy ($25,000)</button>
+        <hr/>
+        <h3>Missions</h3>
+        <button onclick="handleButtonClick(sendSpyMission, 'intel')">Steal Intel</button>
+        <button onclick="handleButtonClick(sendSpyMission, 'cops')">Bribe Cops</button>
+        <button onclick="handleButtonClick(sendSpyMission, 'rival')">Sabotage Rival</button>
+    `;
 
-      document.getElementById('management-panel').innerHTML = `<div class="tab-buttons"><button class="tab-link" onclick="showSubTab('lieutenants-subpanel', event)">Lieutenants</button><button class="tab-link" onclick="showSubTab('diplomacy-subpanel', event)">Diplomacy</button></div><div id="lieutenants-subpanel" class="tab-content item-list"></div><div id="diplomacy-subpanel" class="tab-content item-list"></div>`;
+    // --- LLC Panel ---
+    let propertiesHTML = gameData.properties.map(p => `<p><strong>${p.name}</strong> (Cleans $${p.cleanRate}/tick)</p>`).join('');
+    document.getElementById('llc-panel').innerHTML = `
+        <h2>Property Laundering</h2>
+        <p>Buy businesses to clean dirty money.</p>
+        <hr/>
+        <h3>Your Properties</h3>
+        <div class="item-list">${propertiesHTML || '<p>None</p>'}</div>
+        <hr/>
+        <h3>For Sale</h3>
+        <button onclick="buyProperty('Car Wash', 20000, 500)">Car Wash ($20,000)</button>
+        <button onclick="buyProperty('Nightclub', 100000, 2500)">Nightclub ($100,000)</button>
+        <button onclick="buyProperty('Casino', 1000000, 20000)">Casino ($1,000,000)</button>
+    `;
 
-      let lieutenantsHTML = `<h3>Lieutenants</h3><button onclick="handleButtonClick(hirePersonnel, 'lieutenant')">Hire Lieutenant ($50,000)</button>`;
-      gameData.lieutenants.forEach((lt, index) => { let territory = gameData.territories.find(t => t.lieutenant === index); lieutenantsHTML += `<div class="list-item"><strong>${lt.name}</strong><p>Status: ${territory ? `Managing ${territory.name}` : 'Unassigned'}</p><button onclick="handleButtonClick(assignLieutenant, ${index})">${territory ? 'Re-Assign' : 'Assign'}</button></div>`; });
-      document.getElementById('lieutenants-subpanel').innerHTML = lieutenantsHTML;
+    // --- Personnel / Empire Stats ---
+    let loyaltyColor = gameData.personnelLoyalty > 60 ? 'lightgreen' : gameData.personnelLoyalty > 30 ? 'orange' : 'red';
+    document.getElementById('personnel-inventory').innerHTML = `
+        <h2>Empire Stats</h2>
+        <div class="item-list">
+            <h3>Personnel</h3>
+            <p><strong>Morale: <span style="color:${loyaltyColor};">${gameData.personnelLoyalty.toFixed(1)}%</span></strong></p>
+            <p>Producers: ${gameData.personnel.producers}</p>
+            <button onclick="handleButtonClick(hirePersonnel, 'producer')">Hire ($500)</button>
+            <p>Dealers: ${gameData.personnel.dealers}</p>
+            <button onclick="handleButtonClick(hirePersonnel, 'dealer')">Hire ($750)</button>
+            <p>Soldiers: ${gameData.personnel.soldiers}</p>
+            <button onclick="handleButtonClick(hirePersonnel, 'soldier')">Hire ($1000)</button>
+            <hr/>
+            <h3>Victory Progress</h3>
+            <p>Domination: ${gameData.victory.domination.current}/${gameData.victory.domination.required} Territories</p>
+            <p>Economic: $${Math.floor(gameData.victory.economic.current)}/$${gameData.victory.economic.required}</p>
+        </div>
+    `;
 
-      let diplomacyHTML = `<h3>Rival Leaders</h3>`; gameData.aiPlayers.forEach((ai, index) => { let relPercent = (ai.relationship + 100) / 2; let totalSoldiers = gameData.territories.reduce((sum, t) => t.owner === ai.id ? sum + t.soldiers : sum, 0); diplomacyHTML += `<div class="list-item"> <strong>${ai.name}</strong> (⚔️ ${totalSoldiers}) <div style="width:100%;height:8px;background:#333;border:1px solid #0f0;margin-top:5px;"><div style="width:${relPercent}%;height:100%;background:#0f0;"></div></div> <button onclick="handleButtonClick(proposeDeal, ${index})">Deal ($10k)</button> </div>`; });
-      document.getElementById('diplomacy-subpanel').innerHTML = diplomacyHTML;
+    // --- Map Panel ---
+    let mapHTML = `<h2>City Map</h2><p>Click a territory to attack.</p><div id="map-grid">`;
+    const ownerColors = { 'Player': 'player', 'AI-1': 'ai-1', 'AI-2': 'ai-2', 'AI-3': 'ai-3', 'Neutral': 'neutral' };
+    gameData.territories.forEach(t => {
+        mapHTML += `
+            <div class="territory ${ownerColors[t.owner] || 'neutral'}-controlled"
+                 onclick="handleButtonClick(attackTerritory, ${t.id})">
+                 <span>${t.name}</span>
+                 <span>${t.owner}</span>
+                 <span>⚔️ ${t.soldiers}</span>
+            </div>`;
+    });
+    mapHTML += `</div>`;
+    document.getElementById('map-panel').innerHTML = mapHTML;
 
-      let researchHTML = `<h2>Research & Development</h2><div id="research-grid" style="display:flex; flex-direction:column; gap:10px;">`;
-      const trees = { 'Logistics': ['logistics1', 'logistics2'], 'Military': ['military1', 'military2'], 'Laundering': ['laundering1'] };
-      for (const treeName in trees) {
-        researchHTML += `<div><h3>${treeName}</h3>`;
-        trees[treeName].forEach(researchId => {
-          const r = gameData.research[researchId];
-          let buttonHTML = '';
-          if (r.unlocked) { buttonHTML = `<button disabled>Completed</button>`;
-          } else if (gameData.researchInProgress === researchId) { const progressPercent = (r.progress / r.time) * 100; buttonHTML = `<div class="progress-bar" style="width:100%;background:#222;height:20px;border:1px solid #444;"><div style="height:100%;background:var(--main-green);width:${progressPercent}%"></div></div>`;
-          } else { const requirementMet = r.requires ? gameData.research[r.requires].unlocked : true; buttonHTML = `<button onclick="handleButtonClick(startResearch, '${researchId}')" ${!requirementMet ? 'disabled' : ''}>Research ($${r.cost} Clean)</button>`; }
-          researchHTML += `<div class="research-item" style="border:1px solid var(--border-color);padding:10px;border-radius:5px; margin-top:5px;"><p><strong>${r.name}</strong></p><p style="font-size:0.8rem;">${r.desc}</p>${buttonHTML}</div>`;
-        });
-        researchHTML += `</div>`;
-      }
-      researchHTML += `</div>`;
-      document.getElementById('research-panel').innerHTML = researchHTML;
+    // --- Management Panel ---
+    document.getElementById('management-panel').innerHTML = `
+        <div class="tab-buttons">
+            <button class="tab-link" onclick="showSubTab('lieutenants-subpanel', event)">Lieutenants</button>
+            <button class="tab-link" onclick="showSubTab('diplomacy-subpanel', event)">Diplomacy</button>
+        </div>
+        <div id="lieutenants-subpanel" class="tab-content item-list"></div>
+        <div id="diplomacy-subpanel" class="tab-content item-list"></div>
+    `;
 
-      document.querySelectorAll('#center-panel .tab-content').forEach(tab => tab.classList.remove('active'));
-      document.querySelectorAll('#center-panel > .tab-buttons > .tab-link').forEach(link => link.classList.remove('active'));
-      const activeTab = document.getElementById(currentActiveTab);
-      if(activeTab) activeTab.classList.add('active');
-      const activeLink = document.querySelector(`.tab-link[onclick^="showTab('${currentActiveTab}'"]`);
-      if (activeLink) activeLink.classList.add('active');
-      if (currentActiveTab === 'management-panel') {
-        document.querySelectorAll('#management-panel .tab-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('#management-panel .tab-link').forEach(link => link.classList.remove('active'));
-        const activeSubTab = document.getElementById(currentActiveSubTab);
-        if(activeSubTab) activeSubTab.classList.add('active');
-        const activeSubLink = document.querySelector(`#management-panel .tab-link[onclick^="showSubTab('${currentActiveSubTab}'"]`);
-        if (activeSubLink) activeSubLink.classList.add('active');
-      }
-    }
+    // Lieutenants Subpanel
+    let lieutenantsHTML = `<h3>Lieutenants</h3><button onclick="handleButtonClick(hirePersonnel, 'lieutenant')">Hire Lieutenant ($50,000)</button>`;
+    gameData.lieutenants.forEach((lt, index) => {
+        let territory = gameData.territories.find(t => t.lieutenant === index);
+        lieutenantsHTML += `
+            <div class="list-item">
+                <strong>${lt.name}</strong>
+                <p>Status: ${territory ? `Managing ${territory.name}` : 'Unassigned'}</p>
+                <button onclick="handleButtonClick(assignLieutenant, ${index})">${territory ? 'Re-Assign' : 'Assign'}</button>
+            </div>`;
+    });
+    document.getElementById('lieutenants-subpanel').innerHTML = lieutenantsHTML;
+
+    // Diplomacy Subpanel
+    let diplomacyHTML = `<h3>Rival Leaders</h3>`;
+    gameData.aiPlayers.forEach((ai, index) => {
+        let relPercent = (ai.relationship + 100) / 2;
+        let totalSoldiers = gameData.territories.reduce((sum, t) => t.owner === ai.id ? sum + t.soldiers : sum, 0);
+        diplomacyHTML += `
+            <div class="list-item">
+                <strong>${ai.name}</strong> (⚔️ ${totalSoldiers})
+                <div style="width:100%;height:8px;background:#333;border:1px solid #0f0;margin-top:5px;">
+                    <div style="width:${relPercent}%;height:100%;background:#0f0;"></div>
+                </div>
+                <button onclick="handleButtonClick(proposeDeal, ${index})">Deal ($10k)</button>
+            </div>`;
+    });
+    document.getElementById('diplomacy-subpanel').innerHTML = diplomacyHTML;
+
+
 
     // =================================================================================
     // SECTION 10: UTILITIES
@@ -774,3 +978,4 @@
 </body>
 
 </html>
+
