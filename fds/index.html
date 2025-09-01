@@ -324,7 +324,7 @@
     let gameLoopInterval = null;
     let isPaused = false;
     let gameMode = 'single';
-    let currentActiveTab = 'map-panel';
+    let currentActiveTab = null; 
     let currentActiveSubTab = 'lieutenants-subpanel';
     let isAssigningLieutenant = -1;
     let ytPlayer; // Will hold the YouTube player object
@@ -371,18 +371,19 @@
     // =================================================================================
 
     function startGame(mode) {
-      playerName = document.getElementById('playerName').value || "Player";
-      gameMode = mode;
-      document.getElementById('menu').style.display = 'none';
-      if (gameMode === 'single') {
-        const aiCount = parseInt(document.getElementById('aiCount').value) || 2;
-        document.getElementById('game').style.display = 'block';
-        resetGameData(aiCount);
-        isPaused = false;
-        gameLoopInterval = setInterval(gameLoop, 2000);
-        updateUI();
-      }
-    }
+  playerName = document.getElementById('playerName').value || "Player";
+  gameMode = mode;
+  document.getElementById('menu').style.display = 'none';
+  if (gameMode === 'single') {
+    const aiCount = parseInt(document.getElementById('aiCount').value) || 2;
+    document.getElementById('game').style.display = 'block';
+    resetGameData(aiCount);
+    isPaused = false;
+    updateUI(); // ✅ render UI before loop starts
+    gameLoopInterval = setInterval(gameLoop, 2000);
+  }
+}
+
 
     function gameLoop() {
       if (isPaused || gameData.gameOver) return;
@@ -710,6 +711,7 @@
 
     function updateUI() {
       if (!gameData || gameData.gameOver) return;
+      if (!currentActiveTab) currentActiveTab = 'map-panel';
 
       document.getElementById('top-stats').innerHTML = `<p>💰 Dirty: $${Math.floor(gameData.money)}</p> <p>💵 Clean: $${Math.floor(gameData.whiteMoney)}</p> <p>🔥 Heat: ${Math.floor(gameData.heat)}</p>`;
       document.getElementById('operations').innerHTML = `<h2>Operations</h2> <div class="item-list"> <h3>Drug Operation</h3> <p>Current Production: ${gameData.currentDrug.toUpperCase()}</p> <button onclick="handleButtonClick(upgradeLab)">Upgrade Lab (Lvl ${gameData.labLevel})</button> <h3>Arms Trafficking</h3> <p>Workshop Tier: ${gameData.armsTier}</p> <button onclick="handleButtonClick(upgradeWorkshop)">Upgrade Workshop</button> <button onclick="handleButtonClick(manufactureArms)">Manufacture Arms</button> <button onclick="handleButtonClick(sellArms)">Sell All Arms</button> <h3>Law Enforcement</h3> <button onclick="handleButtonClick(fightBack)">Fight Back</button></div>`;
@@ -789,3 +791,4 @@
 </body>
 
 </html>
+
