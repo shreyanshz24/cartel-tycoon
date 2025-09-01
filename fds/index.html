@@ -16,6 +16,7 @@
             --ai2-color: #ff00ff;
             --ai3-color: #ffff00;
             --neutral-color: #555;
+            --ui-scale: 1;
         }
 
         body {
@@ -25,6 +26,10 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
+            transform: scale(var(--ui-scale));
+            transform-origin: top left;
+            width: calc(100% / var(--ui-scale));
+            height: calc(100% / var(--ui-scale));
         }
 
         .container {
@@ -44,7 +49,7 @@
         }
 
         .header h1 {
-            font-size: 2rem;
+            font-size: calc(2rem * var(--ui-scale));
             color: var(--main-red);
             text-shadow: 0 0 15px var(--main-red);
             margin: 0;
@@ -57,6 +62,7 @@
             padding: 5px 15px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
+            font-size: calc(0.9rem * var(--ui-scale));
         }
 
         main {
@@ -74,6 +80,8 @@
             border: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
+            max-height: 70vh;
+            overflow-y: auto;
         }
 
         h2 {
@@ -81,18 +89,18 @@
             padding-bottom: 4px;
             margin-top: 0;
             margin-bottom: 8px;
-            font-size: 1.2rem;
+            font-size: calc(1.2rem * var(--ui-scale));
         }
 
         h3 {
-            font-size: 1rem;
+            font-size: calc(1rem * var(--ui-scale));
             margin: 10px 0 5px 0;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 3px;
         }
 
         p {
-            font-size: 0.9rem;
+            font-size: calc(0.9rem * var(--ui-scale));
             line-height: 1.5;
             margin: 4px 0;
         }
@@ -109,7 +117,7 @@
             font-weight: bold;
             transition: all 0.2s ease;
             box-sizing: border-box;
-            font-size: 0.9rem;
+            font-size: calc(0.9rem * var(--ui-scale));
         }
         
         button:disabled {
@@ -133,7 +141,7 @@
             margin: 0 2px;
             flex-grow: 1;
             padding: 8px;
-            font-size: 0.9rem;
+            font-size: calc(0.9rem * var(--ui-scale));
         }
 
         .tab-link.active {
@@ -178,7 +186,7 @@
             align-items: center;
             text-align: center;
             padding: 4px;
-            font-size: 0.8rem;
+            font-size: calc(0.8rem * var(--ui-scale));
             cursor: pointer;
             transition: transform 0.2s ease;
         }
@@ -292,6 +300,121 @@
             padding: 5px 10px;
             font-size: 0.8rem;
         }
+
+        /* Minecraft-style menu */
+        .minecraft-button {
+            background: #727272;
+            color: white;
+            border: 2px solid #000;
+            border-radius: 0;
+            padding: 10px 20px;
+            font-family: 'Minecraft', monospace;
+            text-shadow: 2px 2px #000;
+            box-shadow: inset 2px 2px #fff9, inset -2px -2px #0006;
+            transition: all 0.1s;
+        }
+
+        .minecraft-button:hover {
+            background: #828282;
+            transform: translateY(-1px);
+        }
+
+        .minecraft-button:active {
+            box-shadow: inset 2px 2px #0006, inset -2px -2px #fff9;
+            transform: translateY(1px);
+        }
+
+        .minecraft-input {
+            background: #727272;
+            color: white;
+            border: 2px solid #000;
+            border-radius: 0;
+            padding: 8px;
+            font-family: 'Minecraft', monospace;
+            text-shadow: 1px 1px #000;
+            box-shadow: inset 2px 2px #0006, inset -2px -2px #fff9;
+        }
+
+        /* UI Scale Controls */
+        #ui-scale-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #ui-scale-controls label {
+            font-size: 0.9rem;
+        }
+
+        #ui-scale-slider {
+            width: 100px;
+        }
+
+        /* Turn Timer */
+        #turn-timer {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: var(--card-bg);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #turn-progress {
+            width: 100px;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        #turn-progress-bar {
+            height: 100%;
+            background: var(--main-green);
+            width: 0%;
+            transition: width 1s linear;
+        }
+
+        /* Music Player */
+        #music-player {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--card-bg);
+            padding: 5px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        #song-title {
+            font-size: 0.9rem;
+            width: 250px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #music-player button {
+            width: 40px;
+            padding: 5px;
+        }
+
+        #youtube-player-container {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -302,9 +425,9 @@
         <div class="menu-section" id="game-type-section">
             <h2>Select Game Type</h2>
             <div class="menu-buttons">
-                <button onclick="showMenuSection('singleplayer-setup')">Single Player</button>
-                <button onclick="showMenuSection('multiplayer-setup')">Multiplayer</button>
-                <button onclick="showMenuSection('load-game')">Load Game</button>
+                <button class="minecraft-button" onclick="showMenuSection('singleplayer-setup')">Single Player</button>
+                <button class="minecraft-button" onclick="showMenuSection('multiplayer-setup')">Multiplayer</button>
+                <button class="minecraft-button" onclick="showMenuSection('load-game')">Load Game</button>
             </div>
         </div>
 
@@ -313,11 +436,11 @@
             <h2>Single Player Setup</h2>
             <div class="menu-option">
                 <label for="gangNameSingle">Your Gang Name:</label>
-                <input type="text" id="gangNameSingle" placeholder="Enter Gang Name">
+                <input class="minecraft-input" type="text" id="gangNameSingle" placeholder="Enter Gang Name">
             </div>
             <div class="menu-option">
                 <label for="gameMode">Game Mode:</label>
-                <select id="gameMode">
+                <select class="minecraft-input" id="gameMode">
                     <option value="standard">Standard</option>
                     <option value="sandbox">Sandbox (Unlimited Money)</option>
                     <option value="creative">Creative (No Enemies)</option>
@@ -325,11 +448,11 @@
             </div>
             <div class="menu-option">
                 <label for="aiCount">AI Opponents (1-3):</label>
-                <input type="number" id="aiCount" value="2" min="1" max="3">
+                <input class="minecraft-input" type="number" id="aiCount" value="2" min="1" max="3">
             </div>
             <div class="menu-option">
                 <label for="economyDifficulty">Economic Difficulty:</label>
-                <select id="economyDifficulty">
+                <select class="minecraft-input" id="economyDifficulty">
                     <option value="easy">Easy</option>
                     <option value="medium" selected>Medium</option>
                     <option value="hard">Hard</option>
@@ -337,8 +460,8 @@
                 </select>
             </div>
             <div class="menu-buttons">
-                <button onclick="startGame('singleplayer')">Start Game</button>
-                <button onclick="showMenuSection('game-type-section')">Back</button>
+                <button class="minecraft-button" onclick="startGame('singleplayer')">Start Game</button>
+                <button class="minecraft-button" onclick="showMenuSection('game-type-section')">Back</button>
             </div>
         </div>
 
@@ -347,19 +470,19 @@
             <h2>Multiplayer Setup</h2>
             <div class="menu-option">
                 <label for="gangNameMulti">Your Gang Name:</label>
-                <input type="text" id="gangNameMulti" placeholder="Enter Gang Name">
+                <input class="minecraft-input" type="text" id="gangNameMulti" placeholder="Enter Gang Name">
             </div>
             <div class="menu-option">
                 <label for="serverAddress">Server Address:</label>
-                <input type="text" id="serverAddress" placeholder="Enter Server IP/URL">
+                <input class="minecraft-input" type="text" id="serverAddress" placeholder="Enter Server IP/URL">
             </div>
             <div class="menu-option">
                 <label for="playerName">Your Name:</label>
-                <input type="text" id="playerName" placeholder="Enter Your Name">
+                <input class="minecraft-input" type="text" id="playerName" placeholder="Enter Your Name">
             </div>
             <div class="menu-buttons">
-                <button onclick="startGame('multiplayer')">Connect</button>
-                <button onclick="showMenuSection('game-type-section')">Back</button>
+                <button class="minecraft-button" onclick="startGame('multiplayer')">Connect</button>
+                <button class="minecraft-button" onclick="showMenuSection('game-type-section')">Back</button>
             </div>
         </div>
 
@@ -370,7 +493,7 @@
                 <p>Loading saved games...</p>
             </div>
             <div class="menu-buttons">
-                <button onclick="showMenuSection('game-type-section')">Back</button>
+                <button class="minecraft-button" onclick="showMenuSection('game-type-section')">Back</button>
             </div>
         </div>
     </div>
@@ -379,9 +502,15 @@
     <div id="game" class="container">
         <header class="header">
             <h1 id="gang-title">Cartel Tycoon</h1>
+            <div id="music-player">
+                <button onclick="prevSong()">⏮</button>
+                <span id="song-title">Loading Music...</span>
+                <button onclick="nextSong()">⏭</button>
+            </div>
             <div class="top-stats-bar" id="top-stats"></div>
             <div>
                 <button id="saveBtn" onclick="saveGame()">Save</button>
+                <button id="endTurnBtn" onclick="endTurn()">End Turn</button>
                 <button id="pauseBtn" onclick="togglePause()">Pause</button>
             </div>
         </header>
@@ -402,6 +531,24 @@
     </div>
     <div id="pauseOverlay" onclick="togglePause()">PAUSED</div>
 
+    <!-- UI Scale Controls -->
+    <div id="ui-scale-controls">
+        <label for="ui-scale-slider">UI Scale:</label>
+        <input type="range" id="ui-scale-slider" min="0.7" max="1.3" step="0.1" value="1">
+        <span id="ui-scale-value">100%</span>
+    </div>
+
+    <!-- Turn Timer -->
+    <div id="turn-timer">
+        <div>Time Left:</div>
+        <div id="turn-progress">
+            <div id="turn-progress-bar"></div>
+        </div>
+        <div id="time-left">25s</div>
+    </div>
+
+    <div id="youtube-player-container"></div>
+
     <script>
         // Global game variables
         let playerName = "";
@@ -413,6 +560,10 @@
         let currentActiveTab = 'map-panel';
         let currentActiveSubTab = 'lieutenants-subpanel';
         let economyDifficulty = 'medium';
+        let turnTime = 25; // 25 seconds per turn
+        let turnTimeLeft = turnTime;
+        let turnTimer = null;
+        let ytPlayer;
 
         // Menu navigation functions
         function showMenuSection(sectionId) {
@@ -429,6 +580,13 @@
                 loadSaveSlots();
             }
         }
+
+        // UI Scale functionality
+        document.getElementById('ui-scale-slider').addEventListener('input', function(e) {
+            const scaleValue = e.target.value;
+            document.documentElement.style.setProperty('--ui-scale', scaleValue);
+            document.getElementById('ui-scale-value').textContent = Math.round(scaleValue * 100) + '%';
+        });
 
         // Save game system
         function saveGame() {
@@ -479,7 +637,7 @@
                 document.getElementById('gang-title').textContent = gangName;
                 
                 isPaused = false;
-                gameLoopInterval = setInterval(gameLoop, 2000);
+                startTurnTimer();
                 updateUI();
                 
                 showNotification("Game loaded successfully!", "lightgreen");
@@ -554,6 +712,12 @@
                 gameLoopInterval = null;
             }
             
+            // Clear turn timer
+            if (turnTimer) {
+                clearInterval(turnTimer);
+                turnTimer = null;
+            }
+            
             // Hide game UI
             document.getElementById('game').style.display = 'none';
             document.getElementById('gameOverScreen').style.display = 'none';
@@ -561,6 +725,88 @@
             // Show main menu
             document.getElementById('main-menu').style.display = 'flex';
             showMenuSection('game-type-section');
+        }
+
+        // Turn timer system
+        function startTurnTimer() {
+            turnTimeLeft = turnTime;
+            updateTurnTimer();
+            
+            if (turnTimer) {
+                clearInterval(turnTimer);
+            }
+            
+            turnTimer = setInterval(() => {
+                if (!isPaused && !gameData.gameOver) {
+                    turnTimeLeft--;
+                    updateTurnTimer();
+                    
+                    if (turnTimeLeft <= 0) {
+                        endTurn();
+                    }
+                }
+            }, 1000);
+        }
+        
+        function updateTurnTimer() {
+            const progressPercent = (turnTimeLeft / turnTime) * 100;
+            document.getElementById('turn-progress-bar').style.width = progressPercent + '%';
+            document.getElementById('time-left').textContent = turnTimeLeft + 's';
+        }
+        
+        function endTurn() {
+            if (isPaused || gameData.gameOver) return;
+            
+            // Run game logic for the turn
+            gameLoop();
+            
+            // Reset timer
+            startTurnTimer();
+            
+            showNotification("Turn completed", "lightblue");
+        }
+
+        // YouTube Music Player
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        window.onYouTubeIframeAPIReady = function() {
+            ytPlayer = new YT.Player('youtube-player-container', {
+                height: '1',
+                width: '1',
+                playerVars: {
+                    'autoplay': 1,
+                    'controls': 0,
+                    'loop': 1,
+                    'listType': 'playlist',
+                    'list': 'OLAK5uy_k2u2jXntExJQY_M3yTcX2AMmsJJSsDBB0'
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            event.target.setVolume(50);
+            event.target.playVideo();
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.PLAYING) {
+                document.getElementById('song-title').textContent = ytPlayer.getVideoData().title;
+            }
+        }
+
+        function nextSong() {
+            if (ytPlayer) ytPlayer.nextVideo();
+        }
+
+        function prevSong() {
+            if (ytPlayer) ytPlayer.previousVideo();
         }
 
         // Game initialization
@@ -577,7 +823,7 @@
                 const aiCount = parseInt(document.getElementById('aiCount').value) || 2;
                 resetGameData(aiCount);
                 isPaused = false;
-                gameLoopInterval = setInterval(gameLoop, 2000);
+                startTurnTimer();
                 updateUI();
                 
             } else if (type === 'multiplayer') {
@@ -598,7 +844,7 @@
                     
                     resetGameData(2); // Default to 2 AI players for multiplayer fallback
                     isPaused = false;
-                    gameLoopInterval = setInterval(gameLoop, 2000);
+                    startTurnTimer();
                     updateUI();
                 }, 2000);
             }
@@ -915,8 +1161,8 @@
             // Calculate production based on personnel and facilities
             const productionRate = gameData.personnel.producers * 0.2 * (gameData.labLevel + 1) * (gameData.equipment.labs.condition / 100);
             
-            // Add produced drugs to inventory
-            gameData.inventory[gameData.currentDrug] += productionRate;
+            // Add produced drugs to inventory (round to whole numbers)
+            gameData.inventory[gameData.currentDrug] += Math.floor(productionRate);
             
             // Consume chemicals for production
             if (gameData.currentDrug !== 'weed') {
@@ -1131,6 +1377,315 @@
             });
         }
 
+        function checkVictoryConditions() {
+            if (gameData.gameOver) return;
+            
+            // Check for domination victory
+            gameData.victory.domination.current = gameData.territories.filter(t => t.owner === 'Player').length;
+            if (gameData.victory.domination.current >= gameData.victory.domination.required) {
+                triggerGameOver("VICTORY! You control the city.");
+                return;
+            }
+            
+            // Check for economic victory
+            gameData.victory.economic.current = gameData.whiteMoney;
+            if (gameData.victory.economic.current >= gameData.victory.economic.required) {
+                triggerGameOver("VICTORY! Your financial empire is untouchable.");
+                return;
+            }
+            
+            // Check for defeat conditions
+            if (gameData.heat >= 200) {
+                triggerGameOver("BUSTED! The heat was too much.");
+                return;
+            }
+            
+            if (gameData.money <= -10000) {
+                triggerGameOver("BANKRUPT! Your empire has collapsed.");
+                return;
+            }
+            
+            if (gameData.personnelLoyalty <= 0) {
+                triggerGameOver("BETRAYED! Your personnel have abandoned you.");
+                return;
+            }
+            
+            // Check if AI players control most territories
+            if (gameMode !== "creative") {
+                let aiControlCount = 0;
+                gameData.aiPlayers.forEach(ai => {
+                    aiControlCount += gameData.territories.filter(t => t.owner === ai.id).length;
+                });
+                
+                if (aiControlCount >= 12) { // AI controls 80% of territories
+                    triggerGameOver("DEFEATED! Rivals have taken over the city.");
+                    return;
+                }
+            }
+        }
+
+        function triggerGameOver(message) {
+            gameData.gameOver = true;
+            if (turnTimer) {
+                clearInterval(turnTimer);
+                turnTimer = null;
+            }
+            document.getElementById('gameOverText').textContent = message;
+            document.getElementById('gameOverScreen').style.display = 'flex';
+        }
+
+        // Player actions
+        function hirePersonnel(type) {
+            const costs = {
+                producer: 500,
+                dealer: 750,
+                soldier: 1000,
+                spy: 2500,
+                accountant: 2000,
+                lieutenant: 50000
+            };
+            
+            const cost = costs[type];
+            if (gameData.money >= cost) {
+                gameData.money -= cost;
+                if (type === 'lieutenant') {
+                    const names = ["Rico", "Chico", "Lefty", "Sonny", "Benny", "Marco", "Vito", "Luca"];
+                    gameData.lieutenants.push({
+                        name: names[Math.floor(Math.random() * names.length)],
+                        skill: ['logistics', 'combat', 'diplomacy'][Math.floor(Math.random() * 3)]
+                    });
+                } else {
+                    gameData.personnel[type + 's']++;
+                }
+                showNotification(`Hired a new ${type}.`, "lightgreen");
+            } else {
+                showNotification(`Not enough money to hire a ${type}.`, "orange");
+            }
+        }
+
+        function produceWeed() {
+            if (gameData.manualProduction.weed.progress > 0) {
+                showNotification("Already producing weed!", "orange");
+                return;
+            }
+            
+            gameData.manualProduction.weed.progress = gameData.manualProduction.weed.time;
+            showNotification("Started manual weed production", "lightgreen");
+        }
+
+        function updateManualProduction() {
+            // Update manual weed production progress
+            if (gameData.manualProduction.weed.progress > 0) {
+                gameData.manualProduction.weed.progress--;
+                if (gameData.manualProduction.weed.progress === 0) {
+                    gameData.inventory.weed += 5;
+                    showNotification("Manual production complete: +5 Weed", "lightgreen");
+                }
+            }
+        }
+
+        function upgradeLab() {
+            const costs = [25000, 100000, 500000, 2000000, 10000000];
+            const drugs = ["weed", "meth", "coke", "heroin", "fentanyl"];
+            
+            if (gameData.labLevel >= costs.length) {
+                showNotification("Lab is max level.", "lightblue");
+                return;
+            }
+            
+            let cost = costs[gameData.labLevel];
+            if (gameData.money >= cost) {
+                gameData.money -= cost;
+                gameData.labLevel++;
+                gameData.currentDrug = drugs[gameData.labLevel];
+                showNotification(`Lab upgraded to produce ${gameData.currentDrug}!`, "lightgreen");
+            } else {
+                showNotification(`Need $${cost} to upgrade lab.`, "orange");
+            }
+        }
+
+        function attackTerritory(territoryId) {
+            const territory = gameData.territories[territoryId];
+            if (territory.owner === 'Player') {
+                showNotification("You already control this territory.", "orange");
+                return;
+            }
+            
+            if (gameData.personnel.soldiers < 1) {
+                showNotification("You need soldiers to take territory!", "orange");
+                return;
+            }
+            
+            let attackPower = gameData.personnel.soldiers;
+            let defensePower = territory.soldiers;
+            
+            if (attackPower > defensePower) {
+                territory.owner = 'Player';
+                territory.soldiers = Math.max(1, Math.floor(attackPower / 2));
+                gameData.personnel.soldiers = Math.ceil(gameData.personnel.soldiers / 2);
+                showNotification(`You captured ${territory.name}!`, "lightgreen");
+            } else {
+                gameData.personnel.soldiers = Math.max(0, gameData.personnel.soldiers - defensePower);
+                showNotification("Your attack failed! You lost soldiers.", "red");
+            }
+        }
+
+        function buyProperty(name, cost, cleanRate) {
+            if (gameData.money < cost) {
+                showNotification("Not enough dirty money!", "orange");
+                return;
+            }
+            
+            gameData.money -= cost;
+            if (!gameData.properties) gameData.properties = [];
+            gameData.properties.push({ name, cleanRate });
+            showNotification(`${name} purchased!`, "lightgreen");
+        }
+
+        function takeLoan(amount, source) {
+            const loan = {
+                id: Date.now(),
+                amount: amount,
+                remainingAmount: amount * 1.2,
+                monthlyPayment: (amount * 1.2) / 12,
+                remainingPayments: 12,
+                source: source
+            };
+            
+            gameData.loans.push(loan);
+            gameData.whiteMoney += amount;
+            showNotification(`Taken a $${amount} loan from ${source}.`, "lightgreen");
+        }
+
+        function buyStock(company, amount) {
+            const cost = gameData.stocks[company].price * amount;
+            if (gameData.whiteMoney >= cost) {
+                gameData.whiteMoney -= cost;
+                gameData.stocks[company].owned += amount;
+                showNotification(`Bought ${amount} shares of ${company}.`, "lightgreen");
+            } else {
+                showNotification(`Not enough clean money to buy ${amount} shares of ${company}.`, "orange");
+            }
+        }
+
+        function sellStock(company, amount) {
+            if (gameData.stocks[company].owned >= amount) {
+                const revenue = gameData.stocks[company].price * amount;
+                gameData.whiteMoney += revenue;
+                gameData.stocks[company].owned -= amount;
+                showNotification(`Sold ${amount} shares of ${company} for $${revenue}.`, "lightgreen");
+            } else {
+                showNotification(`You don't own enough shares of ${company} to sell ${amount}.`, "orange");
+            }
+        }
+
+        function depositMoney(account, amount) {
+            if (gameData.whiteMoney >= amount) {
+                gameData.whiteMoney -= amount;
+                gameData.bankAccounts[account].balance += amount;
+                showNotification(`Deposited $${amount} to your ${account} account.`, "lightgreen");
+            } else {
+                showNotification(`Not enough clean money to deposit $${amount}.`, "orange");
+            }
+        }
+
+        function withdrawMoney(account, amount) {
+            if (gameData.bankAccounts[account].balance >= amount) {
+                gameData.bankAccounts[account].balance -= amount;
+                
+                if (account === 'offshore') {
+                    const fee = amount * gameData.bankAccounts.offshore.transferFee;
+                    amount -= fee;
+                    showNotification(`Transferred $${amount} from offshore account ($${fee} fee).`, "lightgreen");
+                }
+                
+                gameData.whiteMoney += amount;
+            } else {
+                showNotification(`Not enough money in your ${account} account to withdraw $${amount}.`, "orange");
+            }
+        }
+
+        function repairEquipment(type) {
+            const cost = gameData.resourcePrices.equipment * 10;
+            if (gameData.money >= cost) {
+                gameData.money -= cost;
+                gameData.equipment[type].condition = 100;
+                showNotification(`Repaired all ${type} equipment.`, "lightgreen");
+            } else {
+                showNotification(`Not enough money to repair ${type} equipment.`, "orange");
+            }
+        }
+
+        function buyResources(type, amount) {
+            const cost = gameData.resourcePrices[type] * amount;
+            if (gameData.money >= cost) {
+                gameData.money -= cost;
+                gameData.inventory[type] += amount;
+                showNotification(`Bought ${amount} units of ${type}.`, "lightgreen");
+            } else {
+                showNotification(`Not enough money to buy ${amount} units of ${type}.`, "orange");
+            }
+        }
+
+        function startResearch(researchId) {
+            if (gameData.researchInProgress) {
+                showNotification("Research already in progress.", "orange");
+                return;
+            }
+            
+            const r = gameData.research[researchId];
+            if (gameData.whiteMoney < r.cost) {
+                showNotification(`Need $${r.cost} in clean money for research.`, "orange");
+                return;
+            }
+            
+            const requirementMet = r.requires ? gameData.research[r.requires].unlocked : true;
+            if (!requirementMet) {
+                showNotification("Previous technology not researched yet.", "orange");
+                return;
+            }
+            
+            gameData.whiteMoney -= r.cost;
+            gameData.researchInProgress = researchId;
+            showNotification(`Research started on ${r.name}.`, "lightblue");
+        }
+
+        function updateResearch() {
+            if (gameData.researchInProgress) {
+                const r = gameData.research[gameData.researchInProgress];
+                r.progress += 2;
+                if (r.progress >= r.time) {
+                    r.unlocked = true;
+                    r.progress = r.time;
+                    showNotification(`Research complete: ${r.name}!`, "lightgreen");
+                    gameData.researchInProgress = null;
+                }
+            }
+        }
+
+        function runPersonnelSystem() {
+            const totalPersonnel = gameData.personnel.producers + gameData.personnel.dealers +
+                                 gameData.personnel.soldiers + gameData.personnel.spies +
+                                 gameData.personnel.accountants;
+            
+            const wages = totalPersonnel * 50;
+            if (gameData.money >= wages) {
+                gameData.money -= wages;
+                if (gameData.personnelLoyalty < 100) gameData.personnelLoyalty += 1;
+            } else {
+                gameData.personnelLoyalty = Math.max(0, gameData.personnelLoyalty - 5);
+                showNotification("Can't afford payroll! Morale is dropping!", "red");
+            }
+        }
+
+        function runEmpireManagement() {
+            let territoryIncome = gameData.territories.reduce((sum, t) => {
+                return t.owner === 'Player' ? sum + (t.value * 10) : sum;
+            }, 0);
+            
+            gameData.money += territoryIncome;
+        }
+
         function updateUI() {
             if (!gameData || !gameData.territories || gameData.gameOver) return;
 
@@ -1155,7 +1710,7 @@
                     </button>
                     
                     <h3>Manual Production</h3>
-                    <p>Weed: ${gameData.inventory.weed} units</p>
+                    <p>Weed: ${Math.floor(gameData.inventory.weed)} units</p>
                     <div class="progress-bar">
                         <div class="progress-fill" style="width: ${100 - weedProgressPercent}%;"></div>
                     </div>
@@ -1164,7 +1719,7 @@
                     </button>
 
                     <h3>Resource Management</h3>
-                    <p>Chemicals: ${gameData.inventory.chemicals} units</p>
+                    <p>Chemicals: ${Math.floor(gameData.inventory.chemicals)} units</p>
                     <button onclick="handleButtonClick(buyResources, 'chemicals', 10)">Buy Chemicals (10 for $${Math.floor(gameData.resourcePrices.chemicals * 10)})</button>
                     
                     <h3>Equipment Status</h3>
@@ -1212,10 +1767,107 @@
             mapHTML += `</div>`;
             document.getElementById('map-panel').innerHTML = mapHTML;
 
+            // Management panel
+            document.getElementById('management-panel').innerHTML = `
+                <h2>Gang Management</h2>
+                <div class="item-list">
+                    <h3>Personnel</h3>
+                    <p>Producers: ${gameData.personnel.producers}</p>
+                    <button onclick="handleButtonClick(hirePersonnel, 'producer')">Hire Producer ($500)</button>
+                    
+                    <p>Dealers: ${gameData.personnel.dealers}</p>
+                    <button onclick="handleButtonClick(hirePersonnel, 'dealer')">Hire Dealer ($750)</button>
+                    
+                    <p>Soldiers: ${gameData.personnel.soldiers}</p>
+                    <button onclick="handleButtonClick(hirePersonnel, 'soldier')">Hire Soldier ($1000)</button>
+                    
+                    <p>Spies: ${gameData.personnel.spies}</p>
+                    <button onclick="handleButtonClick(hirePersonnel, 'spy')">Hire Spy ($2500)</button>
+                    
+                    <p>Accountants: ${gameData.personnel.accountants}</p>
+                    <button onclick="handleButtonClick(hirePersonnel, 'accountant')">Hire Accountant ($2000)</button>
+                    
+                    <h3>Lieutenants</h3>
+                    ${gameData.lieutenants.length > 0 ? gameData.lieutenants.map((lt, i) => `
+                        <div class="list-item">
+                            <strong>${lt.name}</strong> - ${lt.skill}
+                        </div>
+                    `).join('') : '<p>No lieutenants hired</p>'}
+                    <button onclick="handleButtonClick(hirePersonnel, 'lieutenant')">Hire Lieutenant ($50,000)</button>
+                </div>
+            `;
+
             // Banking panel
             document.getElementById('banking-panel').innerHTML = `
                 <h2>Banking System</h2>
                 <div class="item-list">
+                    <h3>Banking Overview</h3>
+                    <div class="indicator">
+                        <span class="indicator-label">Money Laundering Efficiency</span>
+                        <div class="indicator-bar">
+                            <div class="indicator-fill" style="width: ${gameData.economicStability}%; background: ${gameData.economicStability > 70 ? '#0f0' : gameData.economicStability > 40 ? '#ff0' : '#f00'}"></div>
+                        </div>
+                        <span class="indicator-value">${Math.floor(gameData.economicStability)}%</span>
+                    </div>
+                    
+                    <p>Total Clean Money: $${Math.floor(gameData.whiteMoney)}</p>
+                    <p>Total Dirty Money: $${Math.floor(gameData.money)}</p>
+                    
+                    <h3>Quick Actions</h3>
+                    <button onclick="handleButtonClick(launderMoney, 1000)">Launder $1000</button>
+                    <button onclick="handleButtonClick(launderMoney, 5000)">Launder $5000</button>
+                    <button onclick="handleButtonClick(launderMoney, 10000)">Launder $10000</button>
+                    
+                    <h3>Money Laundering Options</h3>
+                    <div class="list-item">
+                        <strong>Small Businesses</strong>
+                        <p>Efficiency: 65% | Risk: Low</p>
+                        <button onclick="handleButtonClick(establishBusiness, 'small')">Establish ($10,000)</button>
+                    </div>
+                    <div class="list-item">
+                        <strong>Restaurants</strong>
+                        <p>Efficiency: 75% | Risk: Medium</p>
+                        <button onclick="handleButtonClick(establishBusiness, 'restaurant')">Establish ($25,000)</button>
+                    </div>
+                    <div class="list-item">
+                        <strong>Nightclubs</strong>
+                        <p>Efficiency: 85% | Risk: High</p>
+                        <button onclick="handleButtonClick(establishBusiness, 'nightclub')">Establish ($50,000)</button>
+                    </div>
+                    <div class="list-item">
+                        <strong>Real Estate</strong>
+                        <p>Efficiency: 90% | Risk: Very High</p>
+                        <button onclick="handleButtonClick(establishBusiness, 'realestate')">Establish ($100,000)</button>
+                    </div>
+                    
+                    <h3>Financial Operations</h3>
+                    <button onclick="handleButtonClick(loanSharking, 5000)">Loan Sharking Operation ($5,000 setup)</button>
+                    <button onclick="handleButtonClick(investStockMarket, 10000)">Stock Market Investment ($10,000)</button>
+                    <button onclick="handleButtonClick(offshoreTransfer, 5000)">Offshore Transfer ($5,000)</button>
+                    
+                    <h3>Banking Upgrades</h3>
+                    <div class="list-item">
+                        <strong>Better Accountants</strong>
+                        <p>+10% laundering efficiency</p>
+                        <button onclick="handleButtonClick(upgradeBanking, 'accountants')">Upgrade ($15,000)</button>
+                    </div>
+                    <div class="list-item">
+                        <strong>Shell Companies</strong>
+                        <p>+15% laundering efficiency</p>
+                        <button onclick="handleButtonClick(upgradeBanking, 'shell')">Upgrade ($30,000)</button>
+                    </div>
+                    <div class="list-item">
+                        <strong>Offshore Banking</strong>
+                        <p>+20% laundering efficiency</p>
+                        <button onclick="handleButtonClick(upgradeBanking, 'offshore')">Upgrade ($50,000)</button>
+                    </div>
+                    
+                    <h3>Risk Management</h3>
+                    <p>Current Heat Level: ${Math.floor(gameData.heat)}/200</p>
+                    <p>Seizure Risk: ${(calculateSeizureRisk() * 100).toFixed(1)}%</p>
+                    <button onclick="handleButtonClick(bribeOfficials, 2000)">Bribe Officials ($2,000)</button>
+                    <button onclick="handleButtonClick(hireLawyer, 5000)">Hire Lawyer ($5,000)</button>
+                    <button onclick="handleButtonClick(launderSlow, 1000)">Slow Laundering (-50% heat)</button>
                     <h3>Accounts</h3>
                     <div class="bank-account">
                         <h4>Local Account</h4>
@@ -1310,7 +1962,7 @@
                             <div class="indicator-fill" style="width: ${gameData.inflation * 500}%; background: ${gameData.inflation < 0.05 ? '#0f0' : gameData.inflation < 0.1 ? '#ff0' : '#f00'}"></div>
                         </div>
                         <span class="indicator-value">${(gameData.inflation * 100).toFixed(1)}%</span>
-                        </div>
+                    </div>
                     
                     <h3>Economic Events</h3>
                     ${gameData.economicEvents.length > 0 ? gameData.economicEvents.map(event => `
@@ -1340,9 +1992,10 @@
                         <p>Time: ${research.time} seconds</p>
                         <button onclick="handleButtonClick(startResearch, '${key}')" 
                                 ${canResearch ? '' : 'disabled'}>
-                            ${research.unlocked ? 'Researched' : canResearch ? 'Research' : 'Locked'}
+                                ${research.unlocked ? 'Researched' : canResearch ? 'Research' : 'Locked'}
                         </button>
-                    </div>`;
+                    </div>
+                `;
             }
             researchHTML += `</div>`;
             document.getElementById('research-panel').innerHTML = researchHTML;
@@ -1355,13 +2008,10 @@
                     <h3>Personnel</h3>
                     <p><strong>Morale: <span style="color:${loyaltyColor};">${gameData.personnelLoyalty.toFixed(1)}%</span></strong></p>
                     <p>Producers: ${gameData.personnel.producers}</p>
-                    <button onclick="handleButtonClick(hirePersonnel, 'producer')">Hire ($500)</button>
                     <p>Dealers: ${gameData.personnel.dealers}</p>
-                    <button onclick="handleButtonClick(hirePersonnel, 'dealer')">Hire ($750)</button>
                     <p>Soldiers: ${gameData.personnel.soldiers}</p>
-                    <button onclick="handleButtonClick(hirePersonnel, 'soldier')">Hire ($1000)</button>
+                    <p>Spies: ${gameData.personnel.spies}</p>
                     <p>Accountants: ${gameData.personnel.accountants}</p>
-                    <button onclick="handleButtonClick(hirePersonnel, 'accountant')">Hire ($2000)</button>
                     <hr/>
                     <h3>Victory Progress</h3>
                     <p>Domination: ${gameData.victory.domination.current}/${gameData.victory.domination.required} Territories</p>
@@ -1409,11 +2059,16 @@
             const pauseBtn = document.getElementById('pauseBtn');
             const pauseOverlay = document.getElementById('pauseOverlay');
             if (isPaused) {
-                clearInterval(gameLoopInterval);
+                if (turnTimer) {
+                    clearInterval(turnTimer);
+                    turnTimer = null;
+                }
+                if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo();
                 pauseBtn.textContent = "Resume";
                 pauseOverlay.style.display = 'flex';
             } else {
-                gameLoopInterval = setInterval(gameLoop, 2000);
+                startTurnTimer();
+                if (ytPlayer && typeof ytPlayer.playVideo === 'function') ytPlayer.playVideo();
                 pauseBtn.textContent = "Pause";
                 pauseOverlay.style.display = 'none';
             }
@@ -1436,6 +2091,15 @@
         window.deleteSave = deleteSave;
         window.saveGame = saveGame;
         window.returnToMenu = returnToMenu;
+        window.hirePersonnel = hirePersonnel;
+        window.produceWeed = produceWeed;
+        window.upgradeLab = upgradeLab;
+        window.attackTerritory = attackTerritory;
+        window.buyProperty = buyProperty;
+        window.startResearch = startResearch;
+        window.endTurn = endTurn;
+        window.nextSong = nextSong;
+        window.prevSong = prevSong;
     </script>
 </body>
 </html>
