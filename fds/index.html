@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cartel Tycoon: Final Edition</title>
+    <title>Cartel Tycoon: The Final Code</title>
     <style>
         :root { --main-green: #00ff00; --main-red: #ff0000; --dark-bg: #0a0a0a; --card-bg: rgba(0, 20, 0, 0.7); --border-color: #003300; --player-color: #0077ff; --ai1-color: #ff7700; --ai2-color: #ff00ff; --ai3-color: #ffff00; --ai4-color: #00ffff; --ai5-color: #ff5555; --neutral-color: #555; }
         body { font-family: 'Courier New', monospace; background: var(--dark-bg); color: var(--main-green); margin: 0; padding: 0; overflow: hidden; }
@@ -42,6 +42,11 @@
         .progress-bar { width: 100%; background: #222; height: 10px; border: 1px solid #444; }
         .progress-fill { height: 100%; background: var(--main-green); }
 
+        #music-player { display: flex; align-items: center; gap: 10px; background: var(--card-bg); padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border-color); }
+        #song-title { font-size: 0.9rem; width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #music-player button { width: 40px; padding: 5px; }
+        #youtube-player-container { display: none; }
+
         #menu { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); color: #f00; font-size: 3rem; justify-content: center; align-items: center; flex-direction: column; z-index: 1000; }
         #pauseBtn { width: 100px; background-color: #ffae00; }
         #pauseOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: #ffae00; font-size: 5rem; text-shadow: 0 0 15px #ffae00; justify-content: center; align-items: center; z-index: 999; cursor: pointer; }
@@ -63,6 +68,11 @@
     <div id="game" class="container">
         <header class="header">
             <h1>Cartel Tycoon</h1>
+            <div id="music-player">
+                <button onclick="prevSong()">⏮</button>
+                <span id="song-title">Loading Music...</span>
+                <button onclick="nextSong()">⏭</button>
+            </div>
             <div class="top-stats-bar" id="top-stats"></div>
             <button id="pauseBtn" onclick="togglePause()">Pause</button>
         </header>
@@ -78,7 +88,9 @@
     <div id="pauseOverlay" onclick="togglePause()">PAUSED</div>
     <div id="event-modal"><div class="modal-content" id="event-content"></div></div>
     <div id="territory-modal"><div class="modal-content" id="territory-modal-content"></div></div>
-
+    <div id="youtube-player-container"></div>
+    
+<script src="https://www.youtube.com/iframe_api"></script>
 <script>
 // =================================================================================
 // SECTION 1: CORE GAME SETUP & STATE
@@ -90,6 +102,7 @@ let isPaused = false;
 let gameMode = 'single';
 let currentActiveTab = 'map-panel';
 let currentActiveSubTab = 'lieutenants-subpanel';
+let ytPlayer;
 
 function resetGameData(aiCount = 3) {
     gameData = {
@@ -146,6 +159,7 @@ function startGame(mode) {
     playerName = document.getElementById('playerName').value || "Player";
     gameMode = mode;
     document.getElementById('menu').style.display = 'none';
+    
     const aiCount = parseInt(document.getElementById('aiCount').value) || 3;
     document.getElementById('game').style.display = 'block';
     resetGameData(aiCount);
@@ -174,17 +188,34 @@ function togglePause() {
     const pauseOverlay = document.getElementById('pauseOverlay');
     if (isPaused) {
         clearInterval(gameLoopInterval);
+        if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo();
         pauseBtn.textContent = "Resume";
         pauseOverlay.style.display = 'flex';
     } else {
         gameLoopInterval = setInterval(gameLoop, 2000);
+        if (ytPlayer && typeof ytPlayer.playVideo === 'function') ytPlayer.playVideo();
         pauseBtn.textContent = "Pause";
         pauseOverlay.style.display = 'none';
     }
 }
 
 // =================================================================================
-// SECTION 3: CORE GAMEPLAY LOOPS
+// SECTION 3: YOUTUBE MUSIC PLAYER
+// =================================================================================
+function onYouTubeIframeAPIReady() {
+    ytPlayer = new YT.Player('youtube-player-container', {
+        height: '1', width: '1',
+        playerVars: { 'autoplay': 1, 'controls': 0, 'loop': 1, 'listType': 'playlist', 'list': 'OLAK5uy_k2u2jXntExJQY_M3yTcX2AMmsJJSsDBB0' },
+        events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange }
+    });
+}
+function onPlayerReady(event) { event.target.setVolume(50); event.target.playVideo(); }
+function onPlayerStateChange(event) { if (event.data == YT.PlayerState.PLAYING) { document.getElementById('song-title').textContent = ytPlayer.getVideoData().title; } }
+function nextSong() { if (ytPlayer) ytPlayer.nextVideo(); }
+function prevSong() { if (ytPlayer) ytPlayer.previousVideo(); }
+
+// =================================================================================
+// SECTION 4: CORE GAMEPLAY LOOPS
 // =================================================================================
 function handleButtonClick(actionFn, ...args) { if (isPaused) { showNotification("Game is paused!", "orange"); return; } actionFn(...args); if (gameMode === 'single') updateUI(); }
 
@@ -192,11 +223,9 @@ function runProduction() {
     if (!gameData.research.automation1.unlocked) return;
     const { producers } = gameData.personnel;
     if (producers <= 0) return;
-
     let loyaltyBonus = 0.8 + (gameData.personnelLoyalty / 100) * 0.7;
     let labBonus = 1 + (gameData.labLevel * 0.5);
     let gain = producers * labBonus * loyaltyBonus;
-    
     const currentDrug = getCurrentDrug();
     const chemicalsNeeded = currentDrug === 'weed' ? 0 : producers;
     if (gameData.inventory.chemicals >= chemicalsNeeded) {
@@ -210,7 +239,6 @@ function runProduction() {
 function runLaundering() {
     let totalIncome = 0;
     const drugPrices = { "weed": 10, "meth": 25, "coke": 60, "heroin": 150, "fentanyl": 400 };
-    
     gameData.territories.forEach(t => {
         if (t.owner === 'Player' && t.business) {
             let capacity = t.business.capacity;
@@ -228,10 +256,7 @@ function runLaundering() {
             gameData.heat += laundered * t.business.heatFactor * heatReduction;
         }
     });
-
-    if (gameData.research.laundering1.unlocked) {
-        totalIncome *= 1.1;
-    }
+    if (gameData.research.laundering1.unlocked) { totalIncome *= 1.1; }
     gameData.whiteMoney += totalIncome;
 }
 
@@ -266,19 +291,10 @@ function runEmpireManagement() {
 }
 
 // =================================================================================
-// SECTION 4: PLAYER ACTIONS
+// SECTION 5: PLAYER ACTIONS
 // =================================================================================
-function produceWeedManually() {
-    gameData.inventory.weed += 1;
-}
-
-function sellWeedManually() {
-    if (gameData.inventory.weed > 0) {
-        gameData.inventory.weed--;
-        gameData.money += 10;
-        gameData.heat += 0.1;
-    }
-}
+function produceWeedManually() { gameData.inventory.weed += 1; }
+function sellWeedManually() { if (gameData.inventory.weed > 0) { gameData.inventory.weed--; gameData.money += 10; gameData.heat += 0.1; } }
 
 function hirePersonnel(type) {
     const costs = { producer: 200, dealer: 500, soldier: 1000, lieutenant: 50000, spy: 25000 };
@@ -288,16 +304,11 @@ function hirePersonnel(type) {
     }
     if (gameData.money < costs[type]) { showNotification("Not enough cash.", "red"); return; }
     
-    if (type === 'lieutenant' || type === 'spy') {
-        gameData.money -= costs[type];
-        if (type === 'lieutenant') {
-            const names = ["'El Perro'", "'La Gata'", "'El Martillo'", "'Silencioso'", "'La Sombra'"];
-            gameData.lieutenants.push({ name: names[gameData.lieutenants.length % names.length], assignedTerritory: -1 });
-        } else {
-            gameData.personnel.spies++;
-        }
+    gameData.money -= costs[type];
+    if (type === 'lieutenant') {
+        const names = ["'El Perro'", "'La Gata'", "'El Martillo'", "'Silencioso'", "'La Sombra'"];
+        gameData.lieutenants.push({ name: names[gameData.lieutenants.length % names.length], assignedTerritory: -1 });
     } else {
-        gameData.money -= costs[type];
         gameData.personnel[type + 's']++;
     }
 }
@@ -323,9 +334,7 @@ function upgradeWorkshop() {
 }
 
 function manufactureArms() {
-    const costs = { 1: 500, 2: 2500, 3: 10000 };
-    const arms = { 1: "handgun", 2: "smg", 3: "rifle" };
-    const heat = { 1: 20, 2: 50, 3: 100 };
+    const costs = { 1: 500, 2: 2500, 3: 10000 }, arms = { 1: "handgun", 2: "smg", 3: "rifle" }, heat = { 1: 20, 2: 50, 3: 100 };
     let tier = gameData.armsTier;
     if (tier === 0) { showNotification("You need an Arms Workshop first.", "orange"); return; }
     if (gameData.money < costs[tier]) { showNotification("Not enough cash for parts.", "red"); return; }
@@ -352,9 +361,8 @@ function closeModal(modalId) { /* (Unchanged) */ }
 function buildBusiness(territoryId, type) { /* (Unchanged) */ }
 function assignLieutenant(ltIndex) { /* (Unchanged) */ }
 
-
 // =================================================================================
-// SECTION 5: ESPIONAGE, EVENTS, AI, DIPLOMACY
+// SECTION 6: ESPIONAGE, EVENTS, AI, DIPLOMACY
 // =================================================================================
 function launchSpyMission(targetAiIndex, missionType) { /* (Unchanged) */ }
 const events = [ /* (Unchanged) */ ];
@@ -365,7 +373,7 @@ function proposeDeal(aiIndex) { /* (Unchanged) */ }
 
 
 // =================================================================================
-// SECTION 6: RESEARCH & DEVELOPMENT
+// SECTION 7: RESEARCH & DEVELOPMENT
 // =================================================================================
 function startResearch(researchId) {
     if (gameData.researchInProgress) { showNotification("Another research project is already in progress.", "orange"); return; }
@@ -391,7 +399,7 @@ function updateResearch() {
 
 
 // =================================================================================
-// SECTION 7: VICTORY CONDITIONS
+// SECTION 8: VICTORY CONDITIONS
 // =================================================================================
 function checkVictoryConditions() {
     const playerTerritories = gameData.territories.filter(t => t.owner === 'Player').length;
@@ -406,10 +414,16 @@ function checkVictoryConditions() {
 }
 
 // =================================================================================
-// SECTION 8: UI RENDERING
+// SECTION 9: UI RENDERING
 // =================================================================================
-function showTab(tabName, event) { /* (Unchanged) */ }
-function showSubTab(tabName, event) { /* (Unchanged) */ }
+function showTab(tabName, event) {
+    currentActiveTab = tabName;
+    updateUI();
+}
+function showSubTab(tabName, event) {
+    currentActiveSubTab = tabName;
+    updateUI();
+}
 
 function updateUI() {
     if (!gameData || gameData.gameOver) return;
@@ -435,27 +449,52 @@ function updateUI() {
     document.getElementById('empire-stats').innerHTML = statsHTML;
     
     let mapHTML = `<h2>City Map</h2><div id="map-grid">`;
-    // ... (map rendering logic)
+    const ownerColors = {'Player': 'player', 'AI-1': 'ai-1', 'AI-2': 'ai-2', 'AI-3': 'ai-3', 'AI-4': 'ai-4', 'AI-5': 'ai-5', 'Neutral': 'neutral'};
+    gameData.territories.forEach(t => { mapHTML += `<div class="territory ${ownerColors[t.owner]}-controlled" onclick="handleButtonClick(openTerritoryModal, ${t.id})"><span>${t.name}</span><span>${t.business ? '🏢' : ''} ⚔️ ${t.soldiers}</span></div>`; });
+    mapHTML += `</div>`;
     document.getElementById('map-panel').innerHTML = mapHTML;
 
-    // ... (management panel and sub-tabs rendering logic)
+    document.getElementById('management-panel').innerHTML = `<div class="tab-buttons"><button class="tab-link" onclick="showSubTab('lieutenants-subpanel', event)">Lieutenants</button><button class="tab-link" onclick="showSubTab('diplomacy-subpanel', event)">Diplomacy</button><button class="tab-link" onclick="showSubTab('espionage-subpanel', event)">Espionage</button></div><div id="lieutenants-subpanel" class="tab-content item-list"></div><div id="diplomacy-subpanel" class="tab-content item-list"></div><div id="espionage-subpanel" class="tab-content item-list"></div>`;
+    
+    let lieutenantsHTML = `<h3>Lieutenants</h3><button onclick="handleButtonClick(hirePersonnel, 'lieutenant')">Hire Lieutenant ($50,000)</button>`;
+    // ... lieutenants rendering
+    document.getElementById('lieutenants-subpanel').innerHTML = lieutenantsHTML;
+
+    let diplomacyHTML = `<h3>Rival Leaders</h3>`;
+    // ... diplomacy rendering
+    document.getElementById('diplomacy-subpanel').innerHTML = diplomacyHTML;
+    
+    let espionageHTML = `<h3>Espionage</h3><p>Spies Available: ${gameData.personnel.spies}</p><button onclick="handleButtonClick(hirePersonnel, 'spy')">Hire Spy ($25,000)</button><hr/>`;
+    // ... espionage rendering
+    document.getElementById('espionage-subpanel').innerHTML = espionageHTML;
     
     let researchHTML = `<h2>Research & Development</h2><div id="research-grid">`;
-    // ... (research panel rendering logic)
+    // ... research rendering
     document.getElementById('research-panel').innerHTML = researchHTML;
     
-    // Set active tab logic
-    // ...
+    document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+    document.querySelectorAll('#center-panel > .tab-buttons > .tab-link').forEach(link => link.classList.remove('active'));
+    document.getElementById(currentActiveTab).style.display = 'block';
+    const activeLink = document.querySelector(`.tab-link[onclick^="showTab('${currentActiveTab}'"]`);
+    if(activeLink) activeLink.classList.add('active');
+    
+    if(currentActiveTab === 'management-panel') {
+        document.querySelectorAll('.sub-tab-content').forEach(tab => tab.style.display = 'none');
+        document.querySelectorAll('#management-panel .tab-link').forEach(link => link.classList.remove('active'));
+        document.getElementById(currentActiveSubTab).style.display = 'block';
+        const activeSubLink = document.querySelector(`.tab-link[onclick^="showSubTab('${currentActiveSubTab}'"]`);
+        if(activeSubLink) activeSubLink.classList.add('active');
+    }
 }
 
 // =================================================================================
-// SECTION 9: UTILITIES
+// SECTION 10: UTILITIES
 // =================================================================================
 function getCurrentDrug() {
     const drugTiers = ["weed", "meth", "coke", "heroin", "fentanyl"];
     return drugTiers[gameData.labLevel] || "weed";
 }
-// ... (Other utilities like triggerGameOver, showNotification)
+// ... other utilities
 </script>
 </body>
 </html>
