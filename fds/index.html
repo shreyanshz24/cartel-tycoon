@@ -261,6 +261,21 @@
       z-index: 999;
       cursor: pointer;
     }
+    
+    .progress-bar {
+      width: 100%;
+      height: 10px;
+      background: #333;
+      border-radius: 5px;
+      margin: 5px 0;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: var(--main-green);
+      border-radius: 5px;
+      transition: width 0.3s ease;
+    }
   </style>
 </head>
 
@@ -351,6 +366,7 @@
     window.startResearch = startResearch;
     window.sendSpyMission = sendSpyMission;
     window.buyProperty = buyProperty;
+    window.produceWeed = produceWeed;
 
     document.getElementById('startGameBtn').addEventListener('click', () => startGame('single'));
 
@@ -394,7 +410,11 @@
             { name: "Cartel", drug: "heroin", strength: 4 },
             { name: "Super Cartel", drug: "fentanyl", strength: 5 }
         ],
-        gameOver: false
+        gameOver: false,
+        // NEW: Drug earning caps and manual production
+        drugEarningCaps: { weed: 5000, meth: 15000, coke: 50000, heroin: 150000, fentanyl: 500000 },
+        drugEarnings: { weed: 0, meth: 0, coke: 0, heroin: 0, fentanyl: 0 },
+        manualProduction: { weed: { progress: 0, time: 10 } }
       };
       
       const territoryNames = ["Docks", "Warehouse District", "Downtown", "Suburbs", "Projects", "West Side", "East Side", "Market", "Old Town", "The Strip", "Airport", "Industrial Park", "Southside", "Northbridge", "Chinatown"]; 
@@ -436,6 +456,7 @@
       runEmpireManagement();
       runAiTurns();
       updateResearch();
+      updateManualProduction();
       checkVictoryConditions();
       if (gameData.heat > 0) gameData.heat -= 1;
       if (gameData.heat >= 100 && Math.random() > 0.7) triggerRaid();
@@ -497,11 +518,25 @@
       let productionRate = (gameData.personnel.producers * 0.1) * (gameData.labLevel + 1);
       let sellRate = gameData.personnel.dealers * 0.5;
       let soldAmount = Math.min(gameData.inventory[gameData.currentDrug], sellRate);
+      
       if (soldAmount > 0) {
-          gameData.inventory[gameData.currentDrug] -= soldAmount;
-          let earnings = soldAmount * drugPrices[gameData.currentDrug];
-          gameData.money += earnings;
-          gameData.heat += soldAmount * 0.05 * (gameData.labLevel + 1);
+          // Check if we've reached the earning cap for this drug
+          const potentialEarnings = soldAmount * drugPrices[gameData.currentDrug];
+          const remainingCap = gameData.drugEarningCaps[gameData.currentDrug] - gameData.drugEarnings[gameData.currentDrug];
+          
+          if (remainingCap > 0) {
+              const actualEarnings = Math.min(potentialEarnings, remainingCap);
+              const actualSold = Math.floor(actualEarnings / drugPrices[gameData.currentDrug]);
+              
+              gameData.inventory[gameData.currentDrug] -= actualSold;
+              gameData.money += actualEarnings;
+              gameData.drugEarnings[gameData.currentDrug] += actualEarnings;
+              gameData.heat += actualSold * 0.05 * (gameData.labLevel + 1);
+              
+              if (actualEarnings < potentialEarnings) {
+                  showNotification(`Market saturated! ${gameData.currentDrug.toUpperCase()} earnings capped at $${gameData.drugEarningCaps[gameData.currentDrug]}`, "orange");
+              }
+          }
       }
     }
 
@@ -536,6 +571,17 @@
         }, 0);
         gameData.money += territoryIncome;
     }
+    
+    function updateManualProduction() {
+        // Update manual weed production progress
+        if (gameData.manualProduction.weed.progress > 0) {
+            gameData.manualProduction.weed.progress--;
+            if (gameData.manualProduction.weed.progress === 0) {
+                gameData.inventory.weed += 5;
+                showNotification("Manual production complete: +5 Weed", "lightgreen");
+            }
+        }
+    }
 
     // =================================================================================
     // SECTION 5: PLAYER ACTIONS
@@ -566,6 +612,17 @@
             gameData.currentDrug = drugs[gameData.labLevel];
             showNotification(`Lab upgraded to produce ${gameData.currentDrug}!`, "lightgreen");
         } else { showNotification(`Need $${cost} to upgrade lab.`, "orange"); }
+    }
+    
+    // NEW: Manual weed production function
+    function produceWeed() {
+        if (gameData.manualProduction.weed.progress > 0) {
+            showNotification("Already producing weed!", "orange");
+            return;
+        }
+        
+        gameData.manualProduction.weed.progress = gameData.manualProduction.weed.time;
+        showNotification("Started manual weed production", "lightgreen");
     }
 
     function upgradeWorkshop() { showNotification("Workshop feature coming soon.", "lightblue"); }
@@ -707,14 +764,26 @@
     `;
 
     // --- Operations Panel ---
+    const weedProgressPercent = (gameData.manualProduction.weed.progress / gameData.manualProduction.weed.time) * 100;
     document.getElementById('operations').innerHTML = `
         <h2>Operations</h2>
         <div class="item-list">
             <h3>Drug Operation</h3>
             <p>Current Production: ${gameData.currentDrug.toUpperCase()}</p>
+            <p>Earnings: $${gameData.drugEarnings[gameData.currentDrug]}/$${gameData.drugEarningCaps[gameData.currentDrug]}</p>
             <button onclick="handleButtonClick(upgradeLab)">
                 Upgrade Lab (Lvl ${gameData.labLevel})
             </button>
+            
+            <h3>Manual Production</h3>
+            <p>Weed: ${gameData.inventory.weed} units</p>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: ${100 - weedProgressPercent}%;"></div>
+            </div>
+            <button onclick="handleButtonClick(produceWeed)" ${gameData.manualProduction.weed.progress > 0 ? 'disabled' : ''}>
+                ${gameData.manualProduction.weed.progress > 0 ? 'Producing...' : 'Produce Weed (5 units)'}
+            </button>
+
             <h3>Arms Trafficking</h3>
             <p>Workshop Tier: ${gameData.armsTier}</p>
             <button onclick="handleButtonClick(upgradeWorkshop)">Upgrade Workshop</button>
@@ -729,24 +798,24 @@
     // --- Center Panel Tabs ---
     document.getElementById('center-panel').innerHTML = `
         <div class="tab-buttons">
-            <button class="tab-link" onclick="showTab('map-panel', event)">Map</button>
-            <button class="tab-link" onclick="showTab('management-panel', event)">Management</button>
-            <button class="tab-link" onclick="showTab('llc-panel', event)">LLC</button>
-            <button class="tab-link" onclick="showTab('research-panel', event)">Research</button>
-            <button class="tab-link" onclick="showTab('espionage-panel', event)">Espionage</button>
+            <button class="tab-link ${currentActiveTab === 'map-panel' ? 'active' : ''}" onclick="showTab('map-panel', event)">Map</button>
+            <button class="tab-link ${currentActiveTab === 'management-panel' ? 'active' : ''}" onclick="showTab('management-panel', event)">Management</button>
+            <button class="tab-link ${currentActiveTab === 'llc-panel' ? 'active' : ''}" onclick="showTab('llc-panel', event)">LLC</button>
+            <button class="tab-link ${currentActiveTab === 'research-panel' ? 'active' : ''}" onclick="showTab('research-panel', event)">Research</button>
+            <button class="tab-link ${currentActiveTab === 'espionage-panel' ? 'active' : ''}" onclick="showTab('espionage-panel', event)">Espionage</button>
         </div>
-        <div id="map-panel" class="tab-content"></div>
-        <div id="management-panel" class="tab-content"></div>
-        <div id="llc-panel" class="tab-content"></div>
-        <div id="research-panel" class="tab-content"></div>
-        <div id="espionage-panel" class="tab-content"></div>
+        <div id="map-panel" class="tab-content ${currentActiveTab === 'map-panel' ? 'active' : ''}"></div>
+        <div id="management-panel" class="tab-content ${currentActiveTab === 'management-panel' ? 'active' : ''}"></div>
+        <div id="llc-panel" class="tab-content ${currentActiveTab === 'llc-panel' ? 'active' : ''}"></div>
+        <div id="research-panel" class="tab-content ${currentActiveTab === 'research-panel' ? 'active' : ''}"></div>
+        <div id="espionage-panel" class="tab-content ${currentActiveTab === 'espionage-panel' ? 'active' : ''}"></div>
     `;
 
     // --- Espionage Panel ---
     document.getElementById('espionage-panel').innerHTML = `
         <h2>Espionage</h2>
         <p>Spies Available: ${gameData.personnel.spies}</p>
-        <button onclick="handleButtonClick(hirePersonnel, 'spy')">Hire Spy($25,000)</button>
+        <button onclick="handleButtonClick(hirePersonnel, 'spy')">Hire Spy ($25,000)</button>
         <hr/>
         <h3>Missions</h3>
         <button onclick="handleButtonClick(sendSpyMission, 'intel')">Steal Intel</button>
@@ -786,6 +855,13 @@
             <h3>Victory Progress</h3>
             <p>Domination: ${gameData.victory.domination.current}/${gameData.victory.domination.required} Territories</p>
             <p>Economic: $${Math.floor(gameData.victory.economic.current)}/$${gameData.victory.economic.required}</p>
+            <hr/>
+            <h3>Drug Earnings</h3>
+            <p>Weed: $${gameData.drugEarnings.weed}/$${gameData.drugEarningCaps.weed}</p>
+            <p>Meth: $${gameData.drugEarnings.meth}/$${gameData.drugEarningCaps.meth}</p>
+            <p>Coke: $${gameData.drugEarnings.coke}/$${gameData.drugEarningCaps.coke}</p>
+            <p>Heroin: $${gameData.drugEarnings.heroin}/$${gameData.drugEarningCaps.heroin}</p>
+            <p>Fentanyl: $${gameData.drugEarnings.fentanyl}/$${gameData.drugEarningCaps.fentanyl}</p>
         </div>
     `;
 
@@ -807,11 +883,11 @@
     // --- Management Panel ---
     document.getElementById('management-panel').innerHTML = `
         <div class="tab-buttons">
-            <button class="tab-link" onclick="showSubTab('lieutenants-subpanel', event)">Lieutenants</button>
-            <button class="tab-link" onclick="showSubTab('diplomacy-subpanel', event)">Diplomacy</button>
+            <button class="tab-link ${currentActiveSubTab === 'lieutenants-subpanel' ? 'active' : ''}" onclick="showSubTab('lieutenants-subpanel', event)">Lieutenants</button>
+            <button class="tab-link ${currentActiveSubTab === 'diplomacy-subpanel' ? 'active' : ''}" onclick="showSubTab('diplomacy-subpanel', event)">Diplomacy</button>
         </div>
-        <div id="lieutenants-subpanel" class="tab-content item-list"></div>
-        <div id="diplomacy-subpanel" class="tab-content item-list"></div>
+        <div id="lieutenants-subpanel" class="tab-content item-list ${currentActiveSubTab === 'lieutenants-subpanel' ? 'active' : ''}"></div>
+        <div id="diplomacy-subpanel" class="tab-content item-list ${currentActiveSubTab === 'diplomacy-subpanel' ? 'active' : ''}"></div>
     `;
 
     // Lieutenants Subpanel
@@ -867,20 +943,6 @@
     }
     researchHTML += `</div>`;
     document.getElementById('research-panel').innerHTML = researchHTML;
-
-    // Activate the current tab
-    document.querySelectorAll('.tab-link').forEach(tab => {
-        tab.classList.remove('active');
-        if (tab.textContent.toLowerCase().includes(currentActiveTab)) {
-            tab.classList.add('active');
-        }
-    });
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-        if (content.id === currentActiveTab) {
-            content.classList.add('active');
-        }
-    });
 }
 
     // =================================================================================
