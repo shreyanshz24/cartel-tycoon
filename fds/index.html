@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cartel Tycoon: Economic Expansion</title>
+    <title>Cartel Tycoon: Enhanced Edition</title>
     <style>
         :root {
             --main-green: #00ff00;
@@ -193,166 +193,197 @@
         .neutral-controlled { background-color: var(--neutral-color); }
         .assign-mode { border: 3px dashed yellow !important; }
 
-        /* Economic indicators */
-        .indicator {
+        /* Menu Styles */
+        #main-menu {
             display: flex;
-            align-items: center;
-            margin: 5px 0;
-        }
-        
-        .indicator-label {
-            width: 120px;
-        }
-        
-        .indicator-bar {
-            flex-grow: 1;
-            height: 10px;
-            background: #333;
-            border-radius: 5px;
-            margin: 0 10px;
-            position: relative;
-        }
-        
-        .indicator-fill {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
             height: 100%;
-            border-radius: 5px;
-            transition: width 0.5s ease;
+            background: rgba(0, 0, 0, 0.95);
+            color: #f00;
+            font-size: 2rem;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000;
         }
-        
-        .indicator-value {
-            width: 60px;
-            text-align: right;
+
+        .menu-section {
+            background: rgba(0, 20, 0, 0.8);
+            border: 2px solid #0f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 10px;
+            width: 400px;
+            text-align: center;
         }
-        
-        /* Market trends */
-        .trend-up {
-            color: #00ff00;
+
+        .menu-title {
+            font-size: 2.5rem;
+            color: #f00;
+            text-shadow: 0 0 10px #f00;
+            margin-bottom: 20px;
         }
-        
-        .trend-down {
-            color: #ff0000;
+
+        .menu-option {
+            margin: 15px 0;
         }
-        
-        /* Tooltip */
-        .tooltip {
-            position: relative;
-            display: inline-block;
-            border-bottom: 1px dotted #0f0;
-            cursor: help;
-        }
-        
-        .tooltip .tooltiptext {
-            visibility: hidden;
-            width: 200px;
-            background-color: #000;
+
+        .menu-option label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 1.2rem;
             color: #0f0;
-            text-align: center;
-            border-radius: 6px;
+        }
+
+        .menu-option input, .menu-option select {
+            width: 80%;
+            padding: 10px;
+            background: #000;
             border: 1px solid #0f0;
-            padding: 5px;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -100px;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-            opacity: 1;
-        }
-        
-        /* New UI elements */
-        .market-card {
-            background: rgba(0, 30, 0, 0.8);
-            border: 1px solid #005500;
-            border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 10px;
-        }
-        
-        .resource-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 5px 0;
-        }
-        
-        .resource-name {
-            width: 80px;
-        }
-        
-        .resource-price {
-            width: 80px;
-            text-align: right;
-        }
-        
-        .resource-trend {
-            width: 30px;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
             text-align: center;
         }
-        
-        /* Loan system */
-        .loan-item {
-            border: 1px solid #333;
-            border-radius: 5px;
-            padding: 8px;
-            margin-bottom: 8px;
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
         }
-        
-        /* Property management */
-        .property-card {
-            border: 1px solid #005500;
-            border-radius: 5px;
-            padding: 8px;
-            margin-bottom: 8px;
+
+        .menu-buttons button {
+            font-size: 1.2rem;
+            padding: 12px;
         }
-        
-        /* Stock market */
-        .stock-item {
+
+        #save-load-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .save-slot {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 5px;
-            border-bottom: 1px solid #333;
-        }
-        
-        /* Banking */
-        .bank-account {
-            border: 1px solid #555;
-            border-radius: 5px;
             padding: 10px;
-            margin-bottom: 10px;
+            background: rgba(0, 30, 0, 0.6);
+            border: 1px solid #0f0;
+            border-radius: 5px;
+        }
+
+        .save-info {
+            text-align: left;
+            flex-grow: 1;
+        }
+
+        .save-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .save-actions button {
+            width: auto;
+            padding: 5px 10px;
+            font-size: 0.8rem;
         }
     </style>
 </head>
 <body>
-    <div id="menu">
-        <h1>Cartel Tycoon: Economic Expansion</h1>
-        <input type="text" id="playerName" placeholder="Enter Your Name"
-            style="background:#000;border:1px solid #0f0;color:#0f0;padding:10px;text-align:center;font-family:'Courier New', monospace;margin:10px;">
-        <div id="singlePlayerOptions">
-            <label for="aiCount" style="font-size: 1.5rem; color: #0f0;">AI Opponents (1-3):</label>
-            <input type="number" id="aiCount" value="2" min="1" max="3"
-                style="background:#000;border:1px solid #0f0;color:#0f0;padding:10px;text-align:center;font-family:'Courier New', monospace;margin:10px;">
-            <label for="economyDifficulty" style="font-size: 1.5rem; color: #0f0;">Economic Difficulty:</label>
-            <select id="economyDifficulty" style="background:#000;border:1px solid #0f0;color:#0f0;padding:10px;font-family:'Courier New', monospace;margin:10px;">
-                <option value="easy">Easy</option>
-                <option value="medium" selected>Medium</option>
-                <option value="hard">Hard</option>
-                <option value="realistic">Realistic</option>
-            </select>
+    <!-- Main Menu -->
+    <div id="main-menu">
+        <div class="menu-title">CARTEL TYCOON</div>
+        
+        <div class="menu-section" id="game-type-section">
+            <h2>Select Game Type</h2>
+            <div class="menu-buttons">
+                <button onclick="showMenuSection('singleplayer-setup')">Single Player</button>
+                <button onclick="showMenuSection('multiplayer-setup')">Multiplayer</button>
+                <button onclick="showMenuSection('load-game')">Load Game</button>
+            </div>
         </div>
-        <button id="startGameBtn" style="width: 300px;">Single Player</button>
+
+        <!-- Single Player Setup -->
+        <div class="menu-section" id="singleplayer-setup" style="display: none;">
+            <h2>Single Player Setup</h2>
+            <div class="menu-option">
+                <label for="gangNameSingle">Your Gang Name:</label>
+                <input type="text" id="gangNameSingle" placeholder="Enter Gang Name">
+            </div>
+            <div class="menu-option">
+                <label for="gameMode">Game Mode:</label>
+                <select id="gameMode">
+                    <option value="standard">Standard</option>
+                    <option value="sandbox">Sandbox (Unlimited Money)</option>
+                    <option value="creative">Creative (No Enemies)</option>
+                </select>
+            </div>
+            <div class="menu-option">
+                <label for="aiCount">AI Opponents (1-3):</label>
+                <input type="number" id="aiCount" value="2" min="1" max="3">
+            </div>
+            <div class="menu-option">
+                <label for="economyDifficulty">Economic Difficulty:</label>
+                <select id="economyDifficulty">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                    <option value="realistic">Realistic</option>
+                </select>
+            </div>
+            <div class="menu-buttons">
+                <button onclick="startGame('singleplayer')">Start Game</button>
+                <button onclick="showMenuSection('game-type-section')">Back</button>
+            </div>
+        </div>
+
+        <!-- Multiplayer Setup -->
+        <div class="menu-section" id="multiplayer-setup" style="display: none;">
+            <h2>Multiplayer Setup</h2>
+            <div class="menu-option">
+                <label for="gangNameMulti">Your Gang Name:</label>
+                <input type="text" id="gangNameMulti" placeholder="Enter Gang Name">
+            </div>
+            <div class="menu-option">
+                <label for="serverAddress">Server Address:</label>
+                <input type="text" id="serverAddress" placeholder="Enter Server IP/URL">
+            </div>
+            <div class="menu-option">
+                <label for="playerName">Your Name:</label>
+                <input type="text" id="playerName" placeholder="Enter Your Name">
+            </div>
+            <div class="menu-buttons">
+                <button onclick="startGame('multiplayer')">Connect</button>
+                <button onclick="showMenuSection('game-type-section')">Back</button>
+            </div>
+        </div>
+
+        <!-- Load Game Section -->
+        <div class="menu-section" id="load-game" style="display: none;">
+            <h2>Load Saved Game</h2>
+            <div id="save-slots">
+                <p>Loading saved games...</p>
+            </div>
+            <div class="menu-buttons">
+                <button onclick="showMenuSection('game-type-section')">Back</button>
+            </div>
+        </div>
     </div>
 
+    <!-- Game Container -->
     <div id="game" class="container">
         <header class="header">
-            <h1>Cartel Tycoon: Economic Expansion</h1>
+            <h1 id="gang-title">Cartel Tycoon</h1>
             <div class="top-stats-bar" id="top-stats"></div>
-            <button id="pauseBtn" onclick="togglePause()">Pause</button>
+            <div>
+                <button id="saveBtn" onclick="saveGame()">Save</button>
+                <button id="pauseBtn" onclick="togglePause()">Pause</button>
+            </div>
         </header>
         <main>
             <div class="card" id="operations"></div>
@@ -365,166 +396,345 @@
         style="position:fixed;top:20px;right:20px;width:300px;z-index:1001;font-weight:bold;text-align:right;"></div>
     <div id="gameOverScreen"
         style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);color:#0f0;font-size:3rem;justify-content:center;align-items:center;flex-direction:column;z-index:1000;">
-        <h2 id="gameOverText"></h2><button onclick="location.reload()">Start Over</button>
+        <h2 id="gameOverText"></h2>
+        <button onclick="location.reload()">Start Over</button>
+        <button onclick="returnToMenu()">Return to Menu</button>
     </div>
     <div id="pauseOverlay" onclick="togglePause()">PAUSED</div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Core game variables
-            let playerName = "";
-            let gameData = {};
-            let gameLoopInterval = null;
-            let isPaused = false;
-            let gameMode = 'single';
-            let currentActiveTab = 'map-panel';
-            let currentActiveSubTab = 'lieutenants-subpanel';
-            let economyDifficulty = 'medium';
+        // Global game variables
+        let playerName = "";
+        let gangName = "";
+        let gameMode = "standard";
+        let gameData = {};
+        let gameLoopInterval = null;
+        let isPaused = false;
+        let currentActiveTab = 'map-panel';
+        let currentActiveSubTab = 'lieutenants-subpanel';
+        let economyDifficulty = 'medium';
 
-            // Initialize the game
-            document.getElementById('startGameBtn').addEventListener('click', () => {
-                playerName = document.getElementById('playerName').value || "Player";
-                economyDifficulty = document.getElementById('economyDifficulty').value;
-                startGame('single');
+        // Menu navigation functions
+        function showMenuSection(sectionId) {
+            // Hide all menu sections
+            document.querySelectorAll('.menu-section').forEach(section => {
+                section.style.display = 'none';
             });
+            
+            // Show the requested section
+            document.getElementById(sectionId).style.display = 'block';
+            
+            // Special handling for load game section
+            if (sectionId === 'load-game') {
+                loadSaveSlots();
+            }
+        }
 
-            function startGame(mode) {
-                gameMode = mode;
-                document.getElementById('menu').style.display = 'none';
-                if (gameMode === 'single') {
-                    const aiCount = parseInt(document.getElementById('aiCount').value) || 2;
+        // Save game system
+        function saveGame() {
+            if (!gameData || Object.keys(gameData).length === 0) {
+                showNotification("No game data to save!", "red");
+                return;
+            }
+            
+            // Create save data object
+            const saveData = {
+                gameData: gameData,
+                timestamp: Date.now(),
+                gangName: gangName,
+                gameMode: gameMode,
+                playerName: playerName
+            };
+            
+            // Generate a unique save slot ID
+            const saveSlot = `save_${Date.now()}`;
+            
+            // Save to localStorage
+            localStorage.setItem(saveSlot, JSON.stringify(saveData));
+            
+            // Also update the latest save reference
+            localStorage.setItem('latestSave', saveSlot);
+            
+            showNotification("Game saved successfully!", "lightgreen");
+        }
+
+        function loadGame(saveSlot) {
+            const saveData = localStorage.getItem(saveSlot);
+            
+            if (!saveData) {
+                showNotification("No saved game found!", "red");
+                return;
+            }
+            
+            try {
+                const parsedData = JSON.parse(saveData);
+                gameData = parsedData.gameData;
+                gangName = parsedData.gangName;
+                gameMode = parsedData.gameMode;
+                playerName = parsedData.playerName;
+                
+                // Start the game
+                document.getElementById('main-menu').style.display = 'none';
+                document.getElementById('game').style.display = 'block';
+                document.getElementById('gang-title').textContent = gangName;
+                
+                isPaused = false;
+                gameLoopInterval = setInterval(gameLoop, 2000);
+                updateUI();
+                
+                showNotification("Game loaded successfully!", "lightgreen");
+            } catch (error) {
+                showNotification("Failed to load game: " + error.message, "red");
+            }
+        }
+
+        function loadSaveSlots() {
+            const saveSlotsContainer = document.getElementById('save-slots');
+            saveSlotsContainer.innerHTML = '';
+            
+            // Get all save slots from localStorage
+            const saves = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('save_')) {
+                    try {
+                        const saveData = JSON.parse(localStorage.getItem(key));
+                        saves.push({
+                            key: key,
+                            timestamp: saveData.timestamp,
+                            gangName: saveData.gangName,
+                            gameMode: saveData.gameMode
+                        });
+                    } catch (e) {
+                        console.error("Error parsing save data:", e);
+                    }
+                }
+            }
+            
+            // Sort saves by timestamp (newest first)
+            saves.sort((a, b) => b.timestamp - a.timestamp);
+            
+            if (saves.length === 0) {
+                saveSlotsContainer.innerHTML = '<p>No saved games found</p>';
+                return;
+            }
+            
+            // Display save slots
+            saves.forEach(save => {
+                const saveDate = new Date(save.timestamp);
+                const saveElement = document.createElement('div');
+                saveElement.className = 'save-slot';
+                saveElement.innerHTML = `
+                    <div class="save-info">
+                        <strong>${save.gangName}</strong>
+                        <div>${saveDate.toLocaleString()}</div>
+                        <div>Mode: ${save.gameMode}</div>
+                    </div>
+                    <div class="save-actions">
+                        <button onclick="loadGame('${save.key}')">Load</button>
+                        <button onclick="deleteSave('${save.key}')">Delete</button>
+                    </div>
+                `;
+                saveSlotsContainer.appendChild(saveElement);
+            });
+        }
+
+        function deleteSave(saveKey) {
+            if (confirm("Are you sure you want to delete this saved game?")) {
+                localStorage.removeItem(saveKey);
+                loadSaveSlots(); // Refresh the list
+                showNotification("Save game deleted", "orange");
+            }
+        }
+
+        function returnToMenu() {
+            // Clear game interval
+            if (gameLoopInterval) {
+                clearInterval(gameLoopInterval);
+                gameLoopInterval = null;
+            }
+            
+            // Hide game UI
+            document.getElementById('game').style.display = 'none';
+            document.getElementById('gameOverScreen').style.display = 'none';
+            
+            // Show main menu
+            document.getElementById('main-menu').style.display = 'flex';
+            showMenuSection('game-type-section');
+        }
+
+        // Game initialization
+        function startGame(type) {
+            if (type === 'singleplayer') {
+                gangName = document.getElementById('gangNameSingle').value || "My Gang";
+                gameMode = document.getElementById('gameMode').value;
+                economyDifficulty = document.getElementById('economyDifficulty').value;
+                
+                document.getElementById('main-menu').style.display = 'none';
+                document.getElementById('game').style.display = 'block';
+                document.getElementById('gang-title').textContent = gangName;
+                
+                const aiCount = parseInt(document.getElementById('aiCount').value) || 2;
+                resetGameData(aiCount);
+                isPaused = false;
+                gameLoopInterval = setInterval(gameLoop, 2000);
+                updateUI();
+                
+            } else if (type === 'multiplayer') {
+                gangName = document.getElementById('gangNameMulti').value || "My Gang";
+                playerName = document.getElementById('playerName').value || "Player";
+                const serverAddress = document.getElementById('serverAddress').value;
+                
+                // For this example, we'll just simulate multiplayer with a notification
+                showNotification(`Connecting to ${serverAddress} as ${playerName}...`, "lightblue");
+                
+                // In a real implementation, you would connect to a server here
+                setTimeout(() => {
+                    showNotification("Multiplayer mode is not fully implemented in this demo. Starting single player instead.", "orange");
+                    
+                    document.getElementById('main-menu').style.display = 'none';
                     document.getElementById('game').style.display = 'block';
-                    resetGameData(aiCount);
+                    document.getElementById('gang-title').textContent = gangName;
+                    
+                    resetGameData(2); // Default to 2 AI players for multiplayer fallback
                     isPaused = false;
                     gameLoopInterval = setInterval(gameLoop, 2000);
                     updateUI();
-                }
+                }, 2000);
             }
+        }
 
-            function resetGameData(aiCount = 2) {
-                // Initialize all game data with advanced economic systems
-                gameData = {
-                    money: 10000,
-                    whiteMoney: 0,
-                    heat: 0,
-                    reputation: 50,
-                    inflation: 0,
-                    economicStability: 75,
-                    marketDemand: {
-                        weed: 70,
-                        meth: 40,
-                        coke: 25,
-                        heroin: 15,
-                        fentanyl: 5
-                    },
-                    marketPrices: {
-                        weed: 15,
-                        meth: 60,
-                        coke: 250,
-                        heroin: 600,
-                        fentanyl: 1800
-                    },
-                    priceVolatility: {
-                        weed: 0.1,
-                        meth: 0.15,
-                        coke: 0.2,
-                        heroin: 0.25,
-                        fentanyl: 0.3
-                    },
-                    inventory: { weed: 20, meth: 0, coke: 0, heroin: 0, fentanyl: 0, chemicals: 0 },
-                    productionCapacity: { weed: 5, meth: 0, coke: 0, heroin: 0, fentanyl: 0 },
-                    distributionNetworks: 1,
-                    transportation: { vehicles: 2, efficiency: 0.8 },
-                    armsStock: { handgun: 0, smg: 0, rifle: 0 },
-                    labLevel: 0,
-                    armsTier: 0,
-                    currentDrug: "weed",
-                    personnel: { producers: 2, dealers: 3, soldiers: 2, spies: 0, accountants: 0 },
-                    lieutenants: [],
-                    properties: [],
-                    personnelLoyalty: 75,
-                    territories: [],
-                    aiPlayers: [],
-                    loans: [],
-                    investments: [],
-                    research: {
-                        logistics1: { name: 'Faster Couriers', desc: '+15% Dealer efficiency.', cost: 10000, time: 60, progress: 0, unlocked: false, requires: null },
-                        logistics2: { name: 'Bulk Chemicals', desc: 'Chemical costs reduced by 20%.', cost: 50000, time: 120, progress: 0, unlocked: false, requires: 'logistics1' },
-                        military1: { name: 'Body Armor', desc: '+10% Soldier defense.', cost: 25000, time: 90, progress: 0, unlocked: false, requires: null },
-                        military2: { name: 'Assault Rifles', desc: '+15% Soldier attack power.', cost: 100000, time: 180, progress: 0, unlocked: false, requires: 'military1' },
-                        laundering1: { name: 'Shell Corps', desc: 'Lieutenants take a smaller cut.', cost: 75000, time: 150, progress: 0, unlocked: false, requires: null },
-                        laundering2: { name: 'Offshore Accounts', desc: 'Money laundering efficiency +25%.', cost: 200000, time: 200, progress: 0, unlocked: false, requires: 'laundering1' },
-                        market1: { name: 'Market Analysis', desc: 'See market trends and predictions.', cost: 30000, time: 100, progress: 0, unlocked: false, requires: null }
-                    },
-                    researchInProgress: null,
-                    victory: {
-                        domination: { current: 0, required: 15 },
-                        economic: { current: 0, required: 5000000 },
-                        status: 'Ongoing'
-                    },
-                    gangs: [
-                        { name: "Local Thugs", drug: "weed", strength: 1 },
-                        { name: "Street Gangs", drug: "meth", strength: 2 },
-                        { name: "Big City Gangs", drug: "coke", strength: 3 },
-                        { name: "Cartel", drug: "heroin", strength: 4 },
-                        { name: "Super Cartel", drug: "fentanyl", strength: 5 }
-                    ],
-                    gameOver: false,
-                    drugEarningCaps: { weed: 10000, meth: 50000, coke: 200000, heroin: 800000, fentanyl: 3000000 },
-                    drugEarnings: { weed: 0, meth: 0, coke: 0, heroin: 0, fentanyl: 0 },
-                    manualProduction: { weed: { progress: 0, time: 10 } },
-                    economicEvents: [],
-                    lastMarketUpdate: 0,
-                    economicCycles: {
-                        boom: false,
-                        recession: false,
-                        duration: 0
-                    },
-                    // Banking system
-                    bankAccounts: {
-                        local: { balance: 0, seizureRisk: 0.1 },
-                        offshore: { balance: 0, seizureRisk: 0.02, transferFee: 0.05 }
-                    },
-                    // Stock market
-                    stocks: {
-                        "PharmaCorp": { price: 100, owned: 0, volatility: 0.15 },
-                        "AgriGrow": { price: 50, owned: 0, volatility: 0.2 },
-                        "ChemiCo": { price: 75, owned: 0, volatility: 0.25 },
-                        "SecureTrans": { price: 120, owned: 0, volatility: 0.1 }
-                    },
-                    // Resource market
-                    resourcePrices: {
-                        chemicals: 50,
-                        equipment: 200,
-                        vehicles: 5000
-                    },
-                    // Equipment degradation
-                    equipment: {
-                        labs: { count: 1, condition: 100 },
-                        vehicles: { count: 2, condition: 100 },
-                        weapons: { count: 5, condition: 100 }
-                    }
-                };
+        function resetGameData(aiCount = 2) {
+            // Initialize game data based on selected mode
+            gameData = {
+                money: gameMode === "sandbox" ? 999999 : 10000,
+                whiteMoney: 0,
+                heat: 0,
+                reputation: 50,
+                inflation: 0,
+                economicStability: 75,
+                marketDemand: {
+                    weed: 70,
+                    meth: 40,
+                    coke: 25,
+                    heroin: 15,
+                    fentanyl: 5
+                },
+                marketPrices: {
+                    weed: 15,
+                    meth: 60,
+                    coke: 250,
+                    heroin: 600,
+                    fentanyl: 1800
+                },
+                priceVolatility: {
+                    weed: 0.1,
+                    meth: 0.15,
+                    coke: 0.2,
+                    heroin: 0.25,
+                    fentanyl: 0.3
+                },
+                inventory: { weed: 20, meth: 0, coke: 0, heroin: 0, fentanyl: 0, chemicals: 0 },
+                productionCapacity: { weed: 5, meth: 0, coke: 0, heroin: 0, fentanyl: 0 },
+                distributionNetworks: 1,
+                transportation: { vehicles: 2, efficiency: 0.8 },
+                armsStock: { handgun: 0, smg: 0, rifle: 0 },
+                labLevel: 0,
+                armsTier: 0,
+                currentDrug: "weed",
+                personnel: { 
+                    producers: 2, 
+                    dealers: 3, 
+                    soldiers: gameMode === "creative" ? 10 : 2, 
+                    spies: 0, 
+                    accountants: 0 
+                },
+                lieutenants: [],
+                properties: [],
+                personnelLoyalty: 75,
+                territories: [],
+                aiPlayers: gameMode === "creative" ? [] : [],
+                loans: [],
+                investments: [],
+                research: {
+                    logistics1: { name: 'Faster Couriers', desc: '+15% Dealer efficiency.', cost: 10000, time: 60, progress: 0, unlocked: false, requires: null },
+                    logistics2: { name: 'Bulk Chemicals', desc: 'Chemical costs reduced by 20%.', cost: 50000, time: 120, progress: 0, unlocked: false, requires: 'logistics1' },
+                    military1: { name: 'Body Armor', desc: '+10% Soldier defense.', cost: 25000, time: 90, progress: 0, unlocked: false, requires: null },
+                    military2: { name: 'Assault Rifles', desc: '+15% Soldier attack power.', cost: 100000, time: 180, progress: 0, unlocked: false, requires: 'military1' },
+                    laundering1: { name: 'Shell Corps', desc: 'Lieutenants take a smaller cut.', cost: 75000, time: 150, progress: 0, unlocked: false, requires: null },
+                    laundering2: { name: 'Offshore Accounts', desc: 'Money laundering efficiency +25%.', cost: 200000, time: 200, progress: 0, unlocked: false, requires: 'laundering1' },
+                    market1: { name: 'Market Analysis', desc: 'See market trends and predictions.', cost: 30000, time: 100, progress: 0, unlocked: false, requires: null }
+                },
+                researchInProgress: null,
+                victory: {
+                    domination: { current: 0, required: 15 },
+                    economic: { current: 0, required: 5000000 },
+                    status: 'Ongoing'
+                },
+                gangs: [
+                    { name: "Local Thugs", drug: "weed", strength: 1 },
+                    { name: "Street Gangs", drug: "meth", strength: 2 },
+                    { name: "Big City Gangs", drug: "coke", strength: 3 },
+                    { name: "Cartel", drug: "heroin", strength: 4 },
+                    { name: "Super Cartel", drug: "fentanyl", strength: 5 }
+                ],
+                gameOver: false,
+                drugEarningCaps: { weed: 10000, meth: 50000, coke: 200000, heroin: 800000, fentanyl: 3000000 },
+                drugEarnings: { weed: 0, meth: 0, coke: 0, heroin: 0, fentanyl: 0 },
+                manualProduction: { weed: { progress: 0, time: 10 } },
+                economicEvents: [],
+                lastMarketUpdate: 0,
+                economicCycles: {
+                    boom: false,
+                    recession: false,
+                    duration: 0
+                },
+                // Banking system
+                bankAccounts: {
+                    local: { balance: 0, seizureRisk: 0.1 },
+                    offshore: { balance: 0, seizureRisk: 0.02, transferFee: 0.05 }
+                },
+                // Stock market
+                stocks: {
+                    "PharmaCorp": { price: 100, owned: 0, volatility: 0.15 },
+                    "AgriGrow": { price: 50, owned: 0, volatility: 0.2 },
+                    "ChemiCo": { price: 75, owned: 0, volatility: 0.25 },
+                    "SecureTrans": { price: 120, owned: 0, volatility: 0.1 }
+                },
+                // Resource market
+                resourcePrices: {
+                    chemicals: 50,
+                    equipment: 200,
+                    vehicles: 5000
+                },
+                // Equipment degradation
+                equipment: {
+                    labs: { count: 1, condition: 100 },
+                    vehicles: { count: 2, condition: 100 },
+                    weapons: { count: 5, condition: 100 }
+                }
+            };
 
-                // Initialize territories with economic values
-                const territoryNames = ["Docks", "Warehouse District", "Downtown", "Suburbs", "Projects", "West Side", "East Side", "Market", "Old Town", "The Strip", "Airport", "Industrial Park", "Southside", "Northbridge", "Chinatown"]; 
-                for (let i = 0; i < 15; i++) { 
-                    const economicValue = Math.floor(Math.random() * 100) + 50;
-                    const population = Math.floor(Math.random() * 500) + 200;
-                    gameData.territories.push({ 
-                        id: i, 
-                        name: territoryNames[i], 
-                        owner: 'Neutral', 
-                        value: economicValue,
-                        population: population,
-                        economicStatus: Math.random() > 0.5 ? 'Stable' : 'Unstable',
-                        soldiers: Math.floor(Math.random() * 4), 
-                        lieutenant: -1, 
-                        business: null 
-                    });
-                } 
-                
-                // Initialize AI players with economic strengths
+            // Initialize territories with economic values
+            const territoryNames = ["Docks", "Warehouse District", "Downtown", "Suburbs", "Projects", "West Side", "East Side", "Market", "Old Town", "The Strip", "Airport", "Industrial Park", "Southside", "Northbridge", "Chinatown"]; 
+            for (let i = 0; i < 15; i++) { 
+                const economicValue = Math.floor(Math.random() * 100) + 50;
+                const population = Math.floor(Math.random() * 500) + 200;
+                gameData.territories.push({ 
+                    id: i, 
+                    name: territoryNames[i], 
+                    owner: 'Neutral', 
+                    value: economicValue,
+                    population: population,
+                    economicStatus: Math.random() > 0.5 ? 'Stable' : 'Unstable',
+                    soldiers: Math.floor(Math.random() * 4), 
+                    lieutenant: -1, 
+                    business: null 
+                });
+            } 
+            
+            // Initialize AI players with economic strengths (only if not in creative mode)
+            if (gameMode !== "creative") {
                 const aiNames = ["El Jefe", "La Reina", "The Ghost"]; 
                 for (let i = 0; i < aiCount; i++) { 
                     const aiId = `AI-${i + 1}`; 
@@ -539,731 +749,693 @@
                         marketInfluence: Math.random() * 0.3
                     });
                 }
-                
-                // Adjust difficulty
-                if (economyDifficulty === 'easy') {
-                    // Easier economic conditions
-                    gameData.money = 15000;
-                    gameData.marketDemand = { weed: 80, meth: 50, coke: 35, heroin: 20, fentanyl: 10 };
-                    gameData.personnel = { producers: 3, dealers: 4, soldiers: 3, spies: 0, accountants: 1 };
-                } else if (economyDifficulty === 'hard') {
-                    // Harder economic conditions
-                    gameData.money = 7500;
-                    gameData.marketDemand = { weed: 60, meth: 30, coke: 15, heroin: 10, fentanyl: 3 };
-                    gameData.priceVolatility = { weed: 0.15, meth: 0.2, coke: 0.25, heroin: 0.3, fentanyl: 0.35 };
-                    gameData.economicStability = 60;
-                } else if (economyDifficulty === 'realistic') {
-                    // Very challenging economic conditions
-                    gameData.money = 5000;
-                    gameData.marketDemand = { weed: 50, meth: 25, coke: 12, heroin: 8, fentanyl: 2 };
-                    gameData.priceVolatility = { weed: 0.2, meth: 0.25, coke: 0.3, heroin: 0.35, fentanyl: 0.4 };
-                    gameData.economicStability = 50;
-                    gameData.inflation = 0.05;
-                }
             }
+            
+            // Adjust difficulty
+            if (economyDifficulty === 'easy') {
+                // Easier economic conditions
+                gameData.money = gameMode === "sandbox" ? 999999 : 15000;
+                gameData.marketDemand = { weed: 80, meth: 50, coke: 35, heroin: 20, fentanyl: 10 };
+                gameData.personnel = { 
+                    producers: 3, 
+                    dealers: 4, 
+                    soldiers: gameMode === "creative" ? 10 : 3, 
+                    spies: 0, 
+                    accountants: 1 
+                };
+            } else if (economyDifficulty === 'hard') {
+                // Harder economic conditions
+                gameData.money = gameMode === "sandbox" ? 999999 : 7500;
+                gameData.marketDemand = { weed: 60, meth: 30, coke: 15, heroin: 10, fentanyl: 3 };
+                gameData.priceVolatility = { weed: 0.15, meth: 0.2, coke: 0.25, heroin: 0.3, fentanyl: 0.35 };
+                gameData.economicStability = 60;
+            } else if (economyDifficulty === 'realistic') {
+                // Very challenging economic conditions
+                gameData.money = gameMode === "sandbox" ? 999999 : 5000;
+                gameData.marketDemand = { weed: 50, meth: 25, coke: 12, heroin: 8, fentanyl: 2 };
+                gameData.priceVolatility = { weed: 0.2, meth: 0.25, coke: 0.3, heroin: 0.35, fentanyl: 0.4 };
+                gameData.economicStability = 50;
+                gameData.inflation = 0.05;
+            }
+            
+            // Sandbox mode adjustments
+            if (gameMode === "sandbox") {
+                gameData.personnel = { 
+                    producers: 10, 
+                    dealers: 10, 
+                    soldiers: 10, 
+                    spies: 5, 
+                    accountants: 5 
+                };
+                gameData.labLevel = 3;
+                gameData.inventory = { weed: 100, meth: 100, coke: 100, heroin: 100, fentanyl: 100, chemicals: 1000 };
+            }
+        }
 
-            function gameLoop() {
-                if (isPaused || gameData.gameOver) return;
-                
-                // Run all game systems
-                updateMarketConditions();
-                runProduction();
-                runDistribution();
-                runLaundering();
-                runPersonnelSystem();
-                runEmpireManagement();
+        function gameLoop() {
+            if (isPaused || gameData.gameOver) return;
+            
+            // Run all game systems
+            updateMarketConditions();
+            runProduction();
+            runDistribution();
+            runLaundering();
+            runPersonnelSystem();
+            runEmpireManagement();
+            
+            // Only run AI turns if not in creative mode
+            if (gameMode !== "creative") {
                 runAiTurns();
-                updateResearch();
-                updateManualProduction();
-                updateEconomicEvents();
-                updateBankingSystem();
-                updateStockMarket();
-                updateEquipment();
-                checkVictoryConditions();
-                
-                // Update UI
-                updateUI();
             }
+            
+            updateResearch();
+            updateManualProduction();
+            updateEconomicEvents();
+            updateBankingSystem();
+            updateStockMarket();
+            updateEquipment();
+            checkVictoryConditions();
+            
+            // Update UI
+            updateUI();
+        }
 
-            function updateMarketConditions() {
-                // Update market prices based on supply and demand
-                const drugs = ['weed', 'meth', 'coke', 'heroin', 'fentanyl'];
+        function updateMarketConditions() {
+            // Update market prices based on supply and demand
+            const drugs = ['weed', 'meth', 'coke', 'heroin', 'fentanyl'];
+            
+            drugs.forEach(drug => {
+                // Calculate supply (based on player and AI production)
+                let totalSupply = gameData.inventory[drug];
                 
-                drugs.forEach(drug => {
-                    // Calculate supply (based on player and AI production)
-                    let totalSupply = gameData.inventory[drug];
+                // Only count AI supply if not in creative mode
+                if (gameMode !== "creative") {
                     gameData.aiPlayers.forEach(ai => {
                         // Simulate AI production (simplified)
                         totalSupply += Math.random() * 20;
                     });
-                    
-                    // Calculate demand changes
-                    const baseDemand = gameData.marketDemand[drug];
-                    const volatility = gameData.priceVolatility[drug];
-                    
-                    // Random events affect demand
-                    let demandChange = 0;
-                    if (Math.random() < 0.2) {
-                        demandChange = (Math.random() - 0.5) * 20;
-                        gameData.marketDemand[drug] = Math.max(10, Math.min(100, baseDemand + demandChange));
-                    }
-                    
-                    // Adjust price based on supply and demand
-                    const supplyDemandRatio = totalSupply / (baseDemand * 10);
-                    const priceChange = (1 - supplyDemandRatio) * volatility * gameData.marketPrices[drug];
-                    
-                    gameData.marketPrices[drug] = Math.max(
-                        gameData.marketPrices[drug] * 0.5,
-                        Math.min(
-                            gameData.marketPrices[drug] * 1.5,
-                            gameData.marketPrices[drug] + priceChange
-                        )
-                    );
-                    
-                    // Economic cycles affect all markets
-                    if (gameData.economicCycles.boom) {
-                        gameData.marketPrices[drug] *= 1.1;
-                    } else if (gameData.economicCycles.recession) {
-                        gameData.marketPrices[drug] *= 0.9;
-                    }
-                    
-                    // Inflation effect
-                    gameData.marketPrices[drug] *= (1 + gameData.inflation);
-                });
+                }
                 
-                // Update economic cycles
-                if (gameData.economicCycles.duration > 0) {
-                    gameData.economicCycles.duration--;
+                // Calculate demand changes
+                const baseDemand = gameData.marketDemand[drug];
+                const volatility = gameData.priceVolatility[drug];
+                
+                // Random events affect demand
+                let demandChange = 0;
+                if (Math.random() < 0.2) {
+                    demandChange = (Math.random() - 0.5) * 20;
+                    gameData.marketDemand[drug] = Math.max(10, Math.min(100, baseDemand + demandChange));
+                }
+                
+                // Adjust price based on supply and demand
+                const supplyDemandRatio = totalSupply / (baseDemand * 10);
+                const priceChange = (1 - supplyDemandRatio) * volatility * gameData.marketPrices[drug];
+                
+                gameData.marketPrices[drug] = Math.max(
+                    gameData.marketPrices[drug] * 0.5,
+                    Math.min(
+                        gameData.marketPrices[drug] * 1.5,
+                        gameData.marketPrices[drug] + priceChange
+                    )
+                );
+                
+                // Economic cycles affect all markets
+                if (gameData.economicCycles.boom) {
+                    gameData.marketPrices[drug] *= 1.1;
+                } else if (gameData.economicCycles.recession) {
+                    gameData.marketPrices[drug] *= 0.9;
+                }
+                
+                // Inflation effect
+                gameData.marketPrices[drug] *= (1 + gameData.inflation);
+            });
+            
+            // Update economic cycles
+            if (gameData.economicCycles.duration > 0) {
+                gameData.economicCycles.duration--;
+            } else {
+                // Start a new economic cycle
+                if (Math.random() < 0.1) {
+                    gameData.economicCycles.boom = true;
+                    gameData.economicCycles.recession = false;
+                    gameData.economicCycles.duration = 10 + Math.floor(Math.random() * 20);
+                    gameData.economicEvents.push({
+                        type: 'boom',
+                        message: 'Economic boom! Market prices are rising.',
+                        duration: gameData.economicCycles.duration
+                    });
+                } else if (Math.random() < 0.1) {
+                    gameData.economicCycles.boom = false;
+                    gameData.economicCycles.recession = true;
+                    gameData.economicCycles.duration = 10 + Math.floor(Math.random() * 20);
+                    gameData.economicEvents.push({
+                        type: 'recession',
+                        message: 'Economic recession! Market prices are falling.',
+                        duration: gameData.economicCycles.duration
+                    });
                 } else {
-                    // Start a new economic cycle
-                    if (Math.random() < 0.1) {
-                        gameData.economicCycles.boom = true;
-                        gameData.economicCycles.recession = false;
-                        gameData.economicCycles.duration = 10 + Math.floor(Math.random() * 20);
-                        gameData.economicEvents.push({
-                            type: 'boom',
-                            message: 'Economic boom! Market prices are rising.',
-                            duration: gameData.economicCycles.duration
-                        });
-                    } else if (Math.random() < 0.1) {
-                        gameData.economicCycles.boom = false;
-                        gameData.economicCycles.recession = true;
-                        gameData.economicCycles.duration = 10 + Math.floor(Math.random() * 20);
-                        gameData.economicEvents.push({
-                            type: 'recession',
-                            message: 'Economic recession! Market prices are falling.',
-                            duration: gameData.economicCycles.duration
-                        });
-                    } else {
-                        gameData.economicCycles.boom = false;
-                        gameData.economicCycles.recession = false;
-                    }
+                    gameData.economicCycles.boom = false;
+                    gameData.economicCycles.recession = false;
                 }
-                
-                // Occasionally adjust inflation
-                if (Math.random() < 0.05) {
-                    gameData.inflation += (Math.random() - 0.5) * 0.02;
-                    gameData.inflation = Math.max(0, Math.min(0.2, gameData.inflation));
-                }
-                
-                // Update resource prices
-                gameData.resourcePrices.chemicals *= (1 + (Math.random() - 0.4) * 0.1);
-                gameData.resourcePrices.equipment *= (1 + (Math.random() - 0.3) * 0.08);
-                gameData.resourcePrices.vehicles *= (1 + (Math.random() - 0.2) * 0.05);
             }
-
-            function runProduction() {
-                // Calculate production based on personnel and facilities
-                const productionRate = gameData.personnel.producers * 0.2 * (gameData.labLevel + 1) * (gameData.equipment.labs.condition / 100);
-                
-                // Add produced drugs to inventory
-                gameData.inventory[gameData.currentDrug] += productionRate;
-                
-                // Consume chemicals for production
-                if (gameData.currentDrug !== 'weed') {
-                    const chemicalCost = productionRate * 0.5;
-                    gameData.inventory.chemicals = Math.max(0, gameData.inventory.chemicals - chemicalCost);
-                }
-                
-                // Increase heat based on production
-                gameData.heat += productionRate * 0.03 * (gameData.labLevel + 1);
-                
-                // Degrade equipment
-                gameData.equipment.labs.condition = Math.max(0, gameData.equipment.labs.condition - 0.1);
+            
+            // Occasionally adjust inflation
+            if (Math.random() < 0.05) {
+                gameData.inflation += (Math.random() - 0.5) * 0.02;
+                gameData.inflation = Math.max(0, Math.min(0.2, gameData.inflation));
             }
+            
+            // Update resource prices
+            gameData.resourcePrices.chemicals *= (1 + (Math.random() - 0.4) * 0.1);
+            gameData.resourcePrices.equipment *= (1 + (Math.random() - 0.3) * 0.08);
+            gameData.resourcePrices.vehicles *= (1 + (Math.random() - 0.2) * 0.05);
+        }
 
-            function runDistribution() {
-                // Calculate distribution capacity
-                const distributionCapacity = gameData.personnel.dealers * 0.5 * gameData.distributionNetworks * 
-                                           gameData.transportation.efficiency * (gameData.equipment.vehicles.condition / 100);
-                
-                // Sell drugs based on market demand and prices
-                const drugs = ['weed', 'meth', 'coke', 'heroin', 'fentanyl'];
-                
-                drugs.forEach(drug => {
-                    if (gameData.inventory[drug] > 0) {
-                        // Calculate how much we can sell based on demand and capacity
-                        const marketShare = Math.min(1, gameData.marketDemand[drug] / 100);
-                        const potentialSales = distributionCapacity * marketShare;
-                        const actualSales = Math.min(gameData.inventory[drug], potentialSales);
+        function runProduction() {
+            // Calculate production based on personnel and facilities
+            const productionRate = gameData.personnel.producers * 0.2 * (gameData.labLevel + 1) * (gameData.equipment.labs.condition / 100);
+            
+            // Add produced drugs to inventory
+            gameData.inventory[gameData.currentDrug] += productionRate;
+            
+            // Consume chemicals for production
+            if (gameData.currentDrug !== 'weed') {
+                const chemicalCost = productionRate * 0.5;
+                gameData.inventory.chemicals = Math.max(0, gameData.inventory.chemicals - chemicalCost);
+            }
+            
+            // Increase heat based on production
+            gameData.heat += productionRate * 0.03 * (gameData.labLevel + 1);
+            
+            // Degrade equipment
+            gameData.equipment.labs.condition = Math.max(0, gameData.equipment.labs.condition - 0.1);
+        }
+
+        function runDistribution() {
+            // Calculate distribution capacity
+            const distributionCapacity = gameData.personnel.dealers * 0.5 * gameData.distributionNetworks * 
+                                       gameData.transportation.efficiency * (gameData.equipment.vehicles.condition / 100);
+            
+            // Sell drugs based on market demand and prices
+            const drugs = ['weed', 'meth', 'coke', 'heroin', 'fentanyl'];
+            
+            drugs.forEach(drug => {
+                if (gameData.inventory[drug] > 0) {
+                    // Calculate how much we can sell based on demand and capacity
+                    const marketShare = Math.min(1, gameData.marketDemand[drug] / 100);
+                    const potentialSales = distributionCapacity * marketShare;
+                    const actualSales = Math.min(gameData.inventory[drug], potentialSales);
+                    
+                    // Calculate revenue
+                    const revenue = actualSales * gameData.marketPrices[drug];
+                    
+                    // Check if we've reached the earning cap for this drug
+                    const remainingCap = gameData.drugEarningCaps[drug] - gameData.drugEarnings[drug];
+                    
+                    if (remainingCap > 0) {
+                        const actualRevenue = Math.min(revenue, remainingCap);
+                        const actualSold = Math.floor(actualRevenue / gameData.marketPrices[drug]);
                         
-                        // Calculate revenue
-                        const revenue = actualSales * gameData.marketPrices[drug];
+                        gameData.inventory[drug] -= actualSold;
+                        gameData.money += actualRevenue;
+                        gameData.drugEarnings[drug] += actualRevenue;
+                        gameData.heat += actualSold * 0.05;
                         
-                        // Check if we've reached the earning cap for this drug
-                        const remainingCap = gameData.drugEarningCaps[drug] - gameData.drugEarnings[drug];
-                        
-                        if (remainingCap > 0) {
-                            const actualRevenue = Math.min(revenue, remainingCap);
-                            const actualSold = Math.floor(actualRevenue / gameData.marketPrices[drug]);
-                            
-                            gameData.inventory[drug] -= actualSold;
-                            gameData.money += actualRevenue;
-                            gameData.drugEarnings[drug] += actualRevenue;
-                            gameData.heat += actualSold * 0.05;
-                            
-                            if (actualRevenue < revenue) {
-                                showNotification(`Market saturated! ${drug.toUpperCase()} earnings capped at $${gameData.drugEarningCaps[drug]}`, "orange");
-                            }
+                        if (actualRevenue < revenue) {
+                            showNotification(`Market saturated! ${drug.toUpperCase()} earnings capped at $${gameData.drugEarningCaps[drug]}`, "orange");
                         }
                     }
-                });
-                
-                // Degrade vehicles
-                gameData.equipment.vehicles.condition = Math.max(0, gameData.equipment.vehicles.condition - 0.05);
-            }
+                }
+            });
+            
+            // Degrade vehicles
+            gameData.equipment.vehicles.condition = Math.max(0, gameData.equipment.vehicles.condition - 0.05);
+        }
 
-            function runLaundering() {
-                // Calculate laundering capacity based on properties and personnel
-                let launderingCap = gameData.properties.reduce((sum, p) => sum + p.cleanRate, 0);
-                launderingCap += gameData.personnel.accountants * 500;
-                
-                if (gameData.research.laundering1.unlocked) launderingCap *= 1.2;
-                if (gameData.research.laundering2.unlocked) launderingCap *= 1.25;
-                
-                // Calculate laundering efficiency based on economic stability
-                const efficiency = gameData.economicStability / 100;
-                
-                let amountToLaunder = Math.min(gameData.money, launderingCap * efficiency);
-                if (amountToLaunder > 0) {
-                    gameData.money -= amountToLaunder;
-                    gameData.whiteMoney += amountToLaunder * 0.7; // 30% lost to laundering costs
-                    gameData.heat -= amountToLaunder * 0.0001; // Reduce heat when laundering
-                }
+        function runLaundering() {
+            // Calculate laundering capacity based on properties and personnel
+            let launderingCap = gameData.properties.reduce((sum, p) => sum + p.cleanRate, 0);
+            launderingCap += gameData.personnel.accountants * 500;
+            
+            if (gameData.research.laundering1.unlocked) launderingCap *= 1.2;
+            if (gameData.research.laundering2.unlocked) launderingCap *= 1.25;
+            
+            // Calculate laundering efficiency based on economic stability
+            const efficiency = gameData.economicStability / 100;
+            
+            let amountToLaunder = Math.min(gameData.money, launderingCap * efficiency);
+            if (amountToLaunder > 0) {
+                gameData.money -= amountToLaunder;
+                gameData.whiteMoney += amountToLaunder * 0.7; // 30% lost to laundering costs
+                gameData.heat -= amountToLaunder * 0.0001; // Reduce heat when laundering
             }
+        }
 
-            function updateBankingSystem() {
-                // Check for bank seizures
-                if (Math.random() < gameData.bankAccounts.local.seizureRisk) {
-                    const seizedAmount = gameData.bankAccounts.local.balance * 0.2;
-                    gameData.bankAccounts.local.balance -= seizedAmount;
-                    showNotification(`Police seized $${seizedAmount.toFixed(0)} from your local bank account!`, "red");
-                }
-                
-                if (Math.random() < gameData.bankAccounts.offshore.seizureRisk) {
-                    const seizedAmount = gameData.bankAccounts.offshore.balance * 0.1;
-                    gameData.bankAccounts.offshore.balance -= seizedAmount;
-                    showNotification(`International authorities seized $${seizedAmount.toFixed(0)} from your offshore account!`, "red");
-                }
-                
-                // Process loans
-                gameData.loans.forEach(loan => {
-                    if (loan.remainingPayments > 0) {
-                        const payment = loan.monthlyPayment;
-                        if (gameData.whiteMoney >= payment) {
-                            gameData.whiteMoney -= payment;
-                            loan.remainingPayments--;
-                            loan.remainingAmount -= payment;
-                        } else {
-                            // Default on loan
-                            gameData.reputation -= 10;
-                            gameData.economicStability -= 5;
-                            showNotification(`Defaulted on loan from ${loan.source}! Reputation decreased.`, "red");
-                            gameData.loans = gameData.loans.filter(l => l.id !== loan.id);
-                        }
+        function updateBankingSystem() {
+            // Check for bank seizures
+            if (Math.random() < gameData.bankAccounts.local.seizureRisk) {
+                const seizedAmount = gameData.bankAccounts.local.balance * 0.2;
+                gameData.bankAccounts.local.balance -= seizedAmount;
+                showNotification(`Police seized $${seizedAmount.toFixed(0)} from your local bank account!`, "red");
+            }
+            
+            if (Math.random() < gameData.bankAccounts.offshore.seizureRisk) {
+                const seizedAmount = gameData.bankAccounts.offshore.balance * 0.1;
+                gameData.bankAccounts.offshore.balance -= seizedAmount;
+                showNotification(`International authorities seized $${seizedAmount.toFixed(0)} from your offshore account!`, "red");
+            }
+            
+            // Process loans
+            gameData.loans.forEach(loan => {
+                if (loan.remainingPayments > 0) {
+                    const payment = loan.monthlyPayment;
+                    if (gameData.whiteMoney >= payment) {
+                        gameData.whiteMoney -= payment;
+                        loan.remainingPayments--;
+                        loan.remainingAmount -= payment;
                     } else {
-                        // Loan paid off
+                        // Default on loan
+                        gameData.reputation -= 10;
+                        gameData.economicStability -= 5;
+                        showNotification(`Defaulted on loan from ${loan.source}! Reputation decreased.`, "red");
                         gameData.loans = gameData.loans.filter(l => l.id !== loan.id);
                     }
-                });
-            }
+                } else {
+                    // Loan paid off
+                    gameData.loans = gameData.loans.filter(l => l.id !== loan.id);
+                }
+            });
+        }
 
-            function updateStockMarket() {
-                // Update stock prices
-                for (const [company, data] of Object.entries(gameData.stocks)) {
-                    const change = (Math.random() - 0.5) * 2 * data.volatility;
-                    data.price = Math.max(10, data.price * (1 + change));
-                    
-                    // Economic cycles affect stocks
-                    if (gameData.economicCycles.boom) {
-                        data.price *= 1.05;
-                    } else if (gameData.economicCycles.recession) {
-                        data.price *= 0.95;
-                    }
-                }
+        function updateStockMarket() {
+            // Update stock prices
+            for (const [company, data] of Object.entries(gameData.stocks)) {
+                const change = (Math.random() - 0.5) * 2 * data.volatility;
+                data.price = Math.max(10, data.price * (1 + change));
                 
-                // Calculate dividends from owned stocks
-                let totalDividends = 0;
-                for (const [company, data] of Object.entries(gameData.stocks)) {
-                    if (data.owned > 0) {
-                        const dividend = data.owned * data.price * 0.01; // 1% dividend
-                        totalDividends += dividend;
-                    }
-                }
-                
-                if (totalDividends > 0) {
-                    gameData.whiteMoney += totalDividends;
+                // Economic cycles affect stocks
+                if (gameData.economicCycles.boom) {
+                    data.price *= 1.05;
+                } else if (gameData.economicCycles.recession) {
+                    data.price *= 0.95;
                 }
             }
-
-            function updateEquipment() {
-                // Check if equipment needs replacement
-                if (gameData.equipment.labs.condition < 20) {
-                    showNotification("Your lab equipment is in poor condition and needs maintenance!", "orange");
-                }
-                
-                if (gameData.equipment.vehicles.condition < 20) {
-                    showNotification("Your vehicles are in poor condition and need maintenance!", "orange");
-                }
-                
-                if (gameData.equipment.weapons.condition < 20) {
-                    showNotification("Your weapons are in poor condition and need maintenance!", "orange");
+            
+            // Calculate dividends from owned stocks
+            let totalDividends = 0;
+            for (const [company, data] of Object.entries(gameData.stocks)) {
+                if (data.owned > 0) {
+                    const dividend = data.owned * data.price * 0.01; // 1% dividend
+                    totalDividends += dividend;
                 }
             }
+            
+            if (totalDividends > 0) {
+                gameData.whiteMoney += totalDividends;
+            }
+        }
 
-            function updateEconomicEvents() {
-                // Random economic events
-                if (Math.random() < 0.05) {
-                    const events = [
-                        {
-                            type: "police",
-                            message: "Police crackdown on drug trade! Market demand decreased.",
-                            effect: () => {
-                                for (const drug in gameData.marketDemand) {
-                                    gameData.marketDemand[drug] = Math.max(10, gameData.marketDemand[drug] - 15);
-                                }
-                            }
-                        },
-                        {
-                            type: "new_drug",
-                            message: "New synthetic drug trend! Market demand for fentanyl increased.",
-                            effect: () => {
-                                gameData.marketDemand.fentanyl += 20;
-                            }
-                        },
-                        {
-                            type: "supply_shortage",
-                            message: "Chemical supply shortage! Chemical prices increased.",
-                            effect: () => {
-                                gameData.resourcePrices.chemicals *= 1.5;
-                            }
-                        },
-                        {
-                            type: "tax_audit",
-                            message: "Tax audit on your legitimate businesses! Laundering efficiency decreased.",
-                            effect: () => {
-                                gameData.economicStability -= 10;
+        function updateEquipment() {
+            // Check if equipment needs replacement
+            if (gameData.equipment.labs.condition < 20) {
+                showNotification("Your lab equipment is in poor condition and needs maintenance!", "orange");
+            }
+            
+            if (gameData.equipment.vehicles.condition < 20) {
+                showNotification("Your vehicles are in poor condition and need maintenance!", "orange");
+            }
+            
+            if (gameData.equipment.weapons.condition < 20) {
+                showNotification("Your weapons are in poor condition and need maintenance!", "orange");
+            }
+        }
+
+        function updateEconomicEvents() {
+            // Random economic events
+            if (Math.random() < 0.05) {
+                const events = [
+                    {
+                        type: "police",
+                        message: "Police crackdown on drug trade! Market demand decreased.",
+                        effect: () => {
+                            for (const drug in gameData.marketDemand) {
+                                gameData.marketDemand[drug] = Math.max(10, gameData.marketDemand[drug] - 15);
                             }
                         }
-                    ];
-                    
-                    const event = events[Math.floor(Math.random() * events.length)];
-                    event.effect();
-                    showNotification(event.message, "orange");
-                }
-                
-                // Remove expired events
-                gameData.economicEvents = gameData.economicEvents.filter(event => event.duration > 0);
-                gameData.economicEvents.forEach(event => event.duration--);
-            }
-
-            // Player actions
-            function takeLoan(amount, source) {
-                const loan = {
-                    id: Date.now(),
-                    amount: amount,
-                    remainingAmount: amount * 1.2, // 20% interest
-                    monthlyPayment: (amount * 1.2) / 12,
-                    remainingPayments: 12,
-                    source: source
-                };
-                
-                gameData.loans.push(loan);
-                gameData.whiteMoney += amount;
-                showNotification(`Taken a $${amount} loan from ${source}.`, "lightgreen");
-            }
-
-            function buyStock(company, amount) {
-                const cost = gameData.stocks[company].price * amount;
-                if (gameData.whiteMoney >= cost) {
-                    gameData.whiteMoney -= cost;
-                    gameData.stocks[company].owned += amount;
-                    showNotification(`Bought ${amount} shares of ${company}.`, "lightgreen");
-                } else {
-                    showNotification(`Not enough clean money to buy ${amount} shares of ${company}.`, "orange");
-                }
-            }
-
-            function sellStock(company, amount) {
-                if (gameData.stocks[company].owned >= amount) {
-                    const revenue = gameData.stocks[company].price * amount;
-                    gameData.whiteMoney += revenue;
-                    gameData.stocks[company].owned -= amount;
-                    showNotification(`Sold ${amount} shares of ${company} for $${revenue}.`, "lightgreen");
-                } else {
-                    showNotification(`You don't own enough shares of ${company} to sell ${amount}.`, "orange");
-                }
-            }
-
-            function depositMoney(account, amount) {
-                if (gameData.whiteMoney >= amount) {
-                    gameData.whiteMoney -= amount;
-                    gameData.bankAccounts[account].balance += amount;
-                    showNotification(`Deposited $${amount} to your ${account} account.`, "lightgreen");
-                } else {
-                    showNotification(`Not enough clean money to deposit $${amount}.`, "orange");
-                }
-            }
-
-            function withdrawMoney(account, amount) {
-                if (gameData.bankAccounts[account].balance >= amount) {
-                    gameData.bankAccounts[account].balance -= amount;
-                    
-                    // Offshore accounts have transfer fees
-                    if (account === 'offshore') {
-                        const fee = amount * gameData.bankAccounts.offshore.transferFee;
-                        amount -= fee;
-                        showNotification(`Transferred $${amount} from offshore account ($${fee} fee).`, "lightgreen");
+                    },
+                    {
+                        type: "new_drug",
+                        message: "New synthetic drug trend! Market demand for fentanyl increased.",
+                        effect: () => {
+                            gameData.marketDemand.fentanyl += 20;
+                        }
+                    },
+                    {
+                        type: "supply_shortage",
+                        message: "Chemical supply shortage! Chemical prices increased.",
+                        effect: () => {
+                            gameData.resourcePrices.chemicals *= 1.5;
+                        }
+                    },
+                    {
+                        type: "tax_audit",
+                        message: "Tax audit on your legitimate businesses! Laundering efficiency decreased.",
+                        effect: () => {
+                            gameData.economicStability -= 10;
+                        }
                     }
+                ];
+                
+                const event = events[Math.floor(Math.random() * events.length)];
+                event.effect();
+                showNotification(event.message, "orange");
+            }
+            
+            // Remove expired events
+            gameData.economicEvents = gameData.economicEvents.filter(event => event.duration > 0);
+            gameData.economicEvents.forEach(event => event.duration--);
+        }
+
+        function runAiTurns() {
+            gameData.aiPlayers.forEach(ai => {
+                ai.money += 100 * ai.powerLevel;
+                if (Math.random() > 0.97) { 
+                    const weakTerritories = gameData.territories.filter(t => t.owner !== ai.id && t.soldiers < (ai.powerLevel * 2));
+                    if (weakTerritories.length > 0) {
+                        const target = weakTerritories[Math.floor(Math.random() * weakTerritories.length)];
+                        target.owner = ai.id;
+                        target.soldiers = ai.powerLevel;
+                        showNotification(`${ai.name} has taken control of ${target.name}!`, "orange");
+                    }
+                }
+            });
+        }
+
+        function updateUI() {
+            if (!gameData || !gameData.territories || gameData.gameOver) return;
+
+            // Top stats bar
+            document.getElementById('top-stats').innerHTML = `
+                <p>💰 Dirty: $${Math.floor(gameData.money)}</p>
+                <p>💵 Clean: $${Math.floor(gameData.whiteMoney)}</p>
+                <p>🔥 Heat: ${Math.floor(gameData.heat)}</p>
+                <p>📈 Inflation: ${(gameData.inflation * 100).toFixed(1)}%</p>
+            `;
+
+            // Operations panel
+            const weedProgressPercent = (gameData.manualProduction.weed.progress / gameData.manualProduction.weed.time) * 100;
+            document.getElementById('operations').innerHTML = `
+                <h2>Operations</h2>
+                <div class="item-list">
+                    <h3>Drug Operation</h3>
+                    <p>Current Production: ${gameData.currentDrug.toUpperCase()}</p>
+                    <p>Earnings: $${gameData.drugEarnings[gameData.currentDrug]}/$${gameData.drugEarningCaps[gameData.currentDrug]}</p>
+                    <button onclick="handleButtonClick(upgradeLab)">
+                        Upgrade Lab (Lvl ${gameData.labLevel})
+                    </button>
                     
-                    gameData.whiteMoney += amount;
-                } else {
-                    showNotification(`Not enough money in your ${account} account to withdraw $${amount}.`, "orange");
-                }
+                    <h3>Manual Production</h3>
+                    <p>Weed: ${gameData.inventory.weed} units</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${100 - weedProgressPercent}%;"></div>
+                    </div>
+                    <button onclick="handleButtonClick(produceWeed)" ${gameData.manualProduction.weed.progress > 0 ? 'disabled' : ''}>
+                        ${gameData.manualProduction.weed.progress > 0 ? 'Producing...' : 'Produce Weed (5 units)'}
+                    </button>
+
+                    <h3>Resource Management</h3>
+                    <p>Chemicals: ${gameData.inventory.chemicals} units</p>
+                    <button onclick="handleButtonClick(buyResources, 'chemicals', 10)">Buy Chemicals (10 for $${Math.floor(gameData.resourcePrices.chemicals * 10)})</button>
+                    
+                    <h3>Equipment Status</h3>
+                    <p>Labs: ${gameData.equipment.labs.condition.toFixed(0)}%</p>
+                    <p>Vehicles: ${gameData.equipment.vehicles.condition.toFixed(0)}%</p>
+                    <p>Weapons: ${gameData.equipment.weapons.condition.toFixed(0)}%</p>
+                    <button onclick="handleButtonClick(repairEquipment, 'labs')">Repair Labs ($${Math.floor(gameData.resourcePrices.equipment * 10)})</button>
+                    <button onclick="handleButtonClick(repairEquipment, 'vehicles')">Repair Vehicles ($${Math.floor(gameData.resourcePrices.equipment * 10)})</button>
+
+                    <h3>Law Enforcement</h3>
+                    <button onclick="handleButtonClick(fightBack)">Fight Back</button>
+                </div>
+            `;
+
+            // Center panel with tabs
+            document.getElementById('center-panel').innerHTML = `
+                <div class="tab-buttons">
+                    <button class="tab-link ${currentActiveTab === 'map-panel' ? 'active' : ''}" onclick="showTab('map-panel')">Map</button>
+                    <button class="tab-link ${currentActiveTab === 'management-panel' ? 'active' : ''}" onclick="showTab('management-panel')">Management</button>
+                    <button class="tab-link ${currentActiveTab === 'banking-panel' ? 'active' : ''}" onclick="showTab('banking-panel')">Banking</button>
+                    <button class="tab-link ${currentActiveTab === 'stocks-panel' ? 'active' : ''}" onclick="showTab('stocks-panel')">Stocks</button>
+                    <button class="tab-link ${currentActiveTab === 'market-panel' ? 'active' : ''}" onclick="showTab('market-panel')">Market</button>
+                    <button class="tab-link ${currentActiveTab === 'research-panel' ? 'active' : ''}" onclick="showTab('research-panel')">Research</button>
+                </div>
+                <div id="map-panel" class="tab-content ${currentActiveTab === 'map-panel' ? 'active' : ''}"></div>
+                <div id="management-panel" class="tab-content ${currentActiveTab === 'management-panel' ? 'active' : ''}"></div>
+                <div id="banking-panel" class="tab-content ${currentActiveTab === 'banking-panel' ? 'active' : ''}"></div>
+                <div id="stocks-panel" class="tab-content ${currentActiveTab === 'stocks-panel' ? 'active' : ''}"></div>
+                <div id="market-panel" class="tab-content ${currentActiveTab === 'market-panel' ? 'active' : ''}"></div>
+                <div id="research-panel" class="tab-content ${currentActiveTab === 'research-panel' ? 'active' : ''}"></div>
+            `;
+
+            // Map panel
+            let mapHTML = `<h2>City Map</h2><p>Click a territory to attack.</p><div id="map-grid">`;
+            const ownerColors = { 'Player': 'player', 'AI-1': 'ai-1', 'AI-2': 'ai-2', 'AI-3': 'ai-3', 'Neutral': 'neutral' };
+            gameData.territories.forEach(t => {
+                mapHTML += `
+                    <div class="territory ${ownerColors[t.owner] || 'neutral'}-controlled"
+                         onclick="handleButtonClick(attackTerritory, ${t.id})">
+                         <span>${t.name}</span>
+                         <span>${t.owner}</span>
+                         <span>⚔️ ${t.soldiers}</span>
+                    </div>`;
+            });
+            mapHTML += `</div>`;
+            document.getElementById('map-panel').innerHTML = mapHTML;
+
+            // Banking panel
+            document.getElementById('banking-panel').innerHTML = `
+                <h2>Banking System</h2>
+                <div class="item-list">
+                    <h3>Accounts</h3>
+                    <div class="bank-account">
+                        <h4>Local Account</h4>
+                        <p>Balance: $${Math.floor(gameData.bankAccounts.local.balance)}</p>
+                        <p>Seizure Risk: ${(gameData.bankAccounts.local.seizureRisk * 100).toFixed(1)}%</p>
+                        <button onclick="handleButtonClick(depositMoney, 'local', 1000)">Deposit $1000</button>
+                        <button onclick="handleButtonClick(withdrawMoney, 'local', 1000)">Withdraw $1000</button>
+                    </div>
+                    <div class="bank-account">
+                        <h4>Offshore Account</h4>
+                        <p>Balance: $${Math.floor(gameData.bankAccounts.offshore.balance)}</p>
+                        <p>Seizure Risk: ${(gameData.bankAccounts.offshore.seizureRisk * 100).toFixed(1)}%</p>
+                        <p>Transfer Fee: ${(gameData.bankAccounts.offshore.transferFee * 100).toFixed(1)}%</p>
+                        <button onclick="handleButtonClick(depositMoney, 'offshore', 1000)">Deposit $1000</button>
+                        <button onclick="handleButtonClick(withdrawMoney, 'offshore', 1000)">Withdraw $1000</button>
+                    </div>
+                    
+                    <h3>Loans</h3>
+                    ${gameData.loans.length > 0 ? gameData.loans.map(loan => `
+                        <div class="loan-item">
+                            <p><strong>${loan.source}</strong>: $${Math.floor(loan.remainingAmount)} / $${Math.floor(loan.amount * 1.2)}</p>
+                            <p>Monthly: $${Math.floor(loan.monthlyPayment)} (${loan.remainingPayments} left)</p>
+                        </div>
+                    `).join('') : '<p>No active loans</p>'}
+                    
+                    <button onclick="handleButtonClick(takeLoan, 5000, 'Local Bank')">Take Loan ($5000)</button>
+                    <button onclick="handleButtonClick(takeLoan, 20000, 'Shady Lender')">Take Loan ($20000)</button>
+                </div>
+            `;
+
+            // Stocks panel
+            let stocksHTML = `<h2>Stock Market</h2><div class="item-list">`;
+            for (const [company, data] of Object.entries(gameData.stocks)) {
+                stocksHTML += `
+                    <div class="stock-item">
+                        <div>${company}</div>
+                        <div>$${data.price.toFixed(2)}</div>
+                        <div>${data.owned} owned</div>
+                        <div>
+                            <button onclick="handleButtonClick(buyStock, '${company}', 1)">Buy 1</button>
+                            <button onclick="handleButtonClick(sellStock, '${company}', 1)">Sell 1</button>
+                        </div>
+                    </div>
+                `;
             }
+            stocksHTML += `</div>`;
+            document.getElementById('stocks-panel').innerHTML = stocksHTML;
 
-            function repairEquipment(type) {
-                const cost = gameData.resourcePrices.equipment * 10;
-                if (gameData.money >= cost) {
-                    gameData.money -= cost;
-                    gameData.equipment[type].condition = 100;
-                    showNotification(`Repaired all ${type} equipment.`, "lightgreen");
-                } else {
-                    showNotification(`Not enough money to repair ${type} equipment.`, "orange");
-                }
-            }
-
-            function buyResources(type, amount) {
-                const cost = gameData.resourcePrices[type] * amount;
-                if (gameData.money >= cost) {
-                    gameData.money -= cost;
-                    gameData.inventory[type] += amount;
-                    showNotification(`Bought ${amount} units of ${type}.`, "lightgreen");
-                } else {
-                    showNotification(`Not enough money to buy ${amount} units of ${type}.`, "orange");
-                }
-            }
-
-            function updateUI() {
-                if (!gameData || !gameData.territories || gameData.gameOver) return;
-
-                // Top stats bar
-                document.getElementById('top-stats').innerHTML = `
-                    <p>💰 Dirty: $${Math.floor(gameData.money)}</p>
-                    <p>💵 Clean: $${Math.floor(gameData.whiteMoney)}</p>
-                    <p>🔥 Heat: ${Math.floor(gameData.heat)}</p>
-                    <p>📈 Inflation: ${(gameData.inflation * 100).toFixed(1)}%</p>
-                `;
-
-                // Operations panel
-                const weedProgressPercent = (gameData.manualProduction.weed.progress / gameData.manualProduction.weed.time) * 100;
-                document.getElementById('operations').innerHTML = `
-                    <h2>Operations</h2>
-                    <div class="item-list">
-                        <h3>Drug Operation</h3>
-                        <p>Current Production: ${gameData.currentDrug.toUpperCase()}</p>
-                        <p>Earnings: $${gameData.drugEarnings[gameData.currentDrug]}/$${gameData.drugEarningCaps[gameData.currentDrug]}</p>
-                        <button onclick="handleButtonClick(upgradeLab)">
-                            Upgrade Lab (Lvl ${gameData.labLevel})
-                        </button>
-                        
-                        <h3>Manual Production</h3>
-                        <p>Weed: ${gameData.inventory.weed} units</p>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${100 - weedProgressPercent}%;"></div>
-                        </div>
-                        <button onclick="handleButtonClick(produceWeed)" ${gameData.manualProduction.weed.progress > 0 ? 'disabled' : ''}>
-                            ${gameData.manualProduction.weed.progress > 0 ? 'Producing...' : 'Produce Weed (5 units)'}
-                        </button>
-
-                        <h3>Resource Management</h3>
-                        <p>Chemicals: ${gameData.inventory.chemicals} units</p>
-                        <button onclick="handleButtonClick(buyResources, 'chemicals', 10)">Buy Chemicals (10 for $${Math.floor(gameData.resourcePrices.chemicals * 10)})</button>
-                        
-                        <h3>Equipment Status</h3>
-                        <p>Labs: ${gameData.equipment.labs.condition.toFixed(0)}%</p>
-                        <p>Vehicles: ${gameData.equipment.vehicles.condition.toFixed(0)}%</p>
-                        <p>Weapons: ${gameData.equipment.weapons.condition.toFixed(0)}%</p>
-                        <button onclick="handleButtonClick(repairEquipment, 'labs')">Repair Labs ($${Math.floor(gameData.resourcePrices.equipment * 10)})</button>
-                        <button onclick="handleButtonClick(repairEquipment, 'vehicles')">Repair Vehicles ($${Math.floor(gameData.resourcePrices.equipment * 10)})</button>
-
-                        <h3>Law Enforcement</h3>
-                        <button onclick="handleButtonClick(fightBack)">Fight Back</button>
-                    </div>
-                `;
-
-                // Center panel with tabs
-                document.getElementById('center-panel').innerHTML = `
-                    <div class="tab-buttons">
-                        <button class="tab-link ${currentActiveTab === 'map-panel' ? 'active' : ''}" onclick="showTab('map-panel')">Map</button>
-                        <button class="tab-link ${currentActiveTab === 'management-panel' ? 'active' : ''}" onclick="showTab('management-panel')">Management</button>
-                        <button class="tab-link ${currentActiveTab === 'banking-panel' ? 'active' : ''}" onclick="showTab('banking-panel')">Banking</button>
-                        <button class="tab-link ${currentActiveTab === 'stocks-panel' ? 'active' : ''}" onclick="showTab('stocks-panel')">Stocks</button>
-                        <button class="tab-link ${currentActiveTab === 'market-panel' ? 'active' : ''}" onclick="showTab('market-panel')">Market</button>
-                        <button class="tab-link ${currentActiveTab === 'research-panel' ? 'active' : ''}" onclick="showTab('research-panel')">Research</button>
-                    </div>
-                    <div id="map-panel" class="tab-content ${currentActiveTab === 'map-panel' ? 'active' : ''}"></div>
-                    <div id="management-panel" class="tab-content ${currentActiveTab === 'management-panel' ? 'active' : ''}"></div>
-                    <div id="banking-panel" class="tab-content ${currentActiveTab === 'banking-panel' ? 'active' : ''}"></div>
-                    <div id="stocks-panel" class="tab-content ${currentActiveTab === 'stocks-panel' ? 'active' : ''}"></div>
-                    <div id="market-panel" class="tab-content ${currentActiveTab === 'market-panel' ? 'active' : ''}"></div>
-                    <div id="research-panel" class="tab-content ${currentActiveTab === 'research-panel' ? 'active' : ''}"></div>
-                `;
-
-                // Map panel
-                let mapHTML = `<h2>City Map</h2><p>Click a territory to attack.</p><div id="map-grid">`;
-                const ownerColors = { 'Player': 'player', 'AI-1': 'ai-1', 'AI-2': 'ai-2', 'AI-3': 'ai-3', 'Neutral': 'neutral' };
-                gameData.territories.forEach(t => {
-                    mapHTML += `
-                        <div class="territory ${ownerColors[t.owner] || 'neutral'}-controlled"
-                             onclick="handleButtonClick(attackTerritory, ${t.id})">
-                             <span>${t.name}</span>
-                             <span>${t.owner}</span>
-                             <span>⚔️ ${t.soldiers}</span>
-                        </div>`;
-                });
-                mapHTML += `</div>`;
-                document.getElementById('map-panel').innerHTML = mapHTML;
-
-                // Banking panel
-                document.getElementById('banking-panel').innerHTML = `
-                    <h2>Banking System</h2>
-                    <div class="item-list">
-                        <h3>Accounts</h3>
-                        <div class="bank-account">
-                            <h4>Local Account</h4>
-                            <p>Balance: $${Math.floor(gameData.bankAccounts.local.balance)}</p>
-                            <p>Seizure Risk: ${(gameData.bankAccounts.local.seizureRisk * 100).toFixed(1)}%</p>
-                            <button onclick="handleButtonClick(depositMoney, 'local', 1000)">Deposit $1000</button>
-                            <button onclick="handleButtonClick(withdrawMoney, 'local', 1000)">Withdraw $1000</button>
-                        </div>
-                        <div class="bank-account">
-                            <h4>Offshore Account</h4>
-                            <p>Balance: $${Math.floor(gameData.bankAccounts.offshore.balance)}</p>
-                            <p>Seizure Risk: ${(gameData.bankAccounts.offshore.seizureRisk * 100).toFixed(1)}%</p>
-                            <p>Transfer Fee: ${(gameData.bankAccounts.offshore.transferFee * 100).toFixed(1)}%</p>
-                            <button onclick="handleButtonClick(depositMoney, 'offshore', 1000)">Deposit $1000</button>
-                            <button onclick="handleButtonClick(withdrawMoney, 'offshore', 1000)">Withdraw $1000</button>
-                        </div>
-                        
-                        <h3>Loans</h3>
-                        ${gameData.loans.length > 0 ? gameData.loans.map(loan => `
-                            <div class="loan-item">
-                                <p><strong>${loan.source}</strong>: $${Math.floor(loan.remainingAmount)} / $${Math.floor(loan.amount * 1.2)}</p>
-                                <p>Monthly: $${Math.floor(loan.monthlyPayment)} (${loan.remainingPayments} left)</p>
-                            </div>
-                        `).join('') : '<p>No active loans</p>'}
-                        
-                        <button onclick="handleButtonClick(takeLoan, 5000, 'Local Bank')">Take Loan ($5000)</button>
-                        <button onclick="handleButtonClick(takeLoan, 20000, 'Shady Lender')">Take Loan ($20000)</button>
-                    </div>
-                `;
-
-                // Stocks panel
-                let stocksHTML = `<h2>Stock Market</h2><div class="item-list">`;
-                for (const [company, data] of Object.entries(gameData.stocks)) {
-                    stocksHTML += `
-                        <div class="stock-item">
-                            <div>${company}</div>
-                            <div>$${data.price.toFixed(2)}</div>
-                            <div>${data.owned} owned</div>
-                            <div>
-                                <button onclick="handleButtonClick(buyStock, '${company}', 1)">Buy 1</button>
-                                <button onclick="handleButtonClick(sellStock, '${company}', 1)">Sell 1</button>
-                            </div>
-                        </div>
-                    `;
-                }
-                stocksHTML += `</div>`;
-                document.getElementById('stocks-panel').innerHTML = stocksHTML;
-
-                // Market panel
-                let marketHTML = `
-                    <h2>Market Conditions</h2>
-                    <div class="item-list">
-                        <h3>Drug Markets</h3>
-                        <div class="market-card">
-                            ${Object.entries(gameData.marketPrices).map(([drug, price]) => `
-                                <div class="resource-row">
-                                    <span class="resource-name">${drug.charAt(0).toUpperCase() + drug.slice(1)}</span>
-                                    <span class="resource-price">$${Math.floor(price)}</span>
-                                    <span class="resource-trend">${gameData.marketDemand[drug]}%</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                        
-                        <h3>Resource Prices</h3>
-                        <div class="market-card">
+            // Market panel
+            let marketHTML = `
+                <h2>Market Conditions</h2>
+                <div class="item-list">
+                    <h3>Drug Markets</h3>
+                    <div class="market-card">
+                        ${Object.entries(gameData.marketPrices).map(([drug, price]) => `
                             <div class="resource-row">
-                                <span class="resource-name">Chemicals</span>
-                                <span class="resource-price">$${Math.floor(gameData.resourcePrices.chemicals)}</span>
+                                <span class="resource-name">${drug.charAt(0).toUpperCase() + drug.slice(1)}</span>
+                                <span class="resource-price">$${Math.floor(price)}</span>
+                                <span class="resource-trend">${gameData.marketDemand[drug]}%</span>
                             </div>
-                            <div class="resource-row">
-                                <span class="resource-name">Equipment</span>
-                                <span class="resource-price">$${Math.floor(gameData.resourcePrices.equipment)}</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-name">Vehicles</span>
-                                <span class="resource-price">$${Math.floor(gameData.resourcePrices.vehicles)}</span>
-                            </div>
-                        </div>
-                        
-                        <h3>Economic Indicators</h3>
-                        <div class="indicator">
-                            <span class="indicator-label">Stability</span>
-                            <div class="indicator-bar">
-                                <div class="indicator-fill" style="width: ${gameData.economicStability}%; background: ${gameData.economicStability > 70 ? '#0f0' : gameData.economicStability > 40 ? '#ff0' : '#f00'}"></div>
-                            </div>
-                            <span class="indicator-value">${Math.floor(gameData.economicStability)}%</span>
-                        </div>
-                        
-                        <div class="indicator">
-                            <span class="indicator-label">Inflation</span>
-                            <div class="indicator-bar">
-                                <div class="indicator-fill" style="width: ${gameData.inflation * 500}%; background: ${gameData.inflation < 0.05 ? '#0f0' : gameData.inflation < 0.1 ? '#ff0' : '#f00'}"></div>
-                            </div>
-                            <span class="indicator-value">${(gameData.inflation * 100).toFixed(1)}%</span>
-                        </div>
-                        
-                        <h3>Economic Events</h3>
-                        ${gameData.economicEvents.length > 0 ? gameData.economicEvents.map(event => `
-                            <div class="list-item">
-                                <p>${event.message} (${event.duration} turns left)</p>
-                            </div>
-                        `).join('') : '<p>No current economic events</p>'}
+                        `).join('')}
                     </div>
-                `;
-                document.getElementById('market-panel').innerHTML = marketHTML;
-
-                // Research panel
-                let researchHTML = `<h2>Research & Development</h2>`;
-                if (gameData.researchInProgress) {
-                    const r = gameData.research[gameData.researchInProgress];
-                    researchHTML += `<p>Research in Progress: ${r.name} (${Math.floor((r.progress / r.time) * 100)}%)</p>`;
-                }
-                researchHTML += `<div class="item-list">`;
-                for (const [key, research] of Object.entries(gameData.research)) {
-                    const canResearch = !research.unlocked && !gameData.researchInProgress && 
-                                       (!research.requires || gameData.research[research.requires].unlocked);
-                    researchHTML += `
+                    
+                    <h3>Resource Prices</h3>
+                    <div class="market-card">
+                        <div class="resource-row">
+                            <span class="resource-name">Chemicals</span>
+                            <span class="resource-price">$${Math.floor(gameData.resourcePrices.chemicals)}</span>
+                        </div>
+                        <div class="resource-row">
+                            <span class="resource-name">Equipment</span>
+                            <span class="resource-price">$${Math.floor(gameData.resourcePrices.equipment)}</span>
+                        </div>
+                        <div class="resource-row">
+                            <span class="resource-name">Vehicles</span>
+                            <span class="resource-price">$${Math.floor(gameData.resourcePrices.vehicles)}</span>
+                        </div>
+                    </div>
+                    
+                    <h3>Economic Indicators</h3>
+                    <div class="indicator">
+                        <span class="indicator-label">Stability</span>
+                        <div class="indicator-bar">
+                            <div class="indicator-fill" style="width: ${gameData.economicStability}%; background: ${gameData.economicStability > 70 ? '#0f0' : gameData.economicStability > 40 ? '#ff0' : '#f00'}"></div>
+                        </div>
+                        <span class="indicator-value">${Math.floor(gameData.economicStability)}%</span>
+                    </div>
+                    
+                    <div class="indicator">
+                        <span class="indicator-label">Inflation</span>
+                        <div class="indicator-bar">
+                            <div class="indicator-fill" style="width: ${gameData.inflation * 500}%; background: ${gameData.inflation < 0.05 ? '#0f0' : gameData.inflation < 0.1 ? '#ff0' : '#f00'}"></div>
+                        </div>
+                        <span class="indicator-value">${(gameData.inflation * 100).toFixed(1)}%</span>
+                        </div>
+                    
+                    <h3>Economic Events</h3>
+                    ${gameData.economicEvents.length > 0 ? gameData.economicEvents.map(event => `
                         <div class="list-item">
-                            <strong>${research.name}</strong>
-                            <p>${research.desc}</p>
-                            <p>Cost: $${research.cost} clean money</p>
-                            <p>Time: ${research.time} seconds</p>
-                            <button onclick="handleButtonClick(startResearch, '${key}')" 
-                                    ${canResearch ? '' : 'disabled'}>
-                                ${research.unlocked ? 'Researched' : canResearch ? 'Research' : 'Locked'}
-                            </button>
-                        </div>`;
-                }
-                researchHTML += `</div>`;
-                document.getElementById('research-panel').innerHTML = researchHTML;
+                            <p>${event.message} (${event.duration} turns left)</p>
+                        </div>
+                    `).join('') : '<p>No current economic events</p>'}
+                </div>
+            `;
+            document.getElementById('market-panel').innerHTML = marketHTML;
 
-                // Personnel panel
-                let loyaltyColor = gameData.personnelLoyalty > 60 ? 'lightgreen' : gameData.personnelLoyalty > 30 ? 'orange' : 'red';
-                document.getElementById('personnel-inventory').innerHTML = `
-                    <h2>Empire Stats</h2>
-                    <div class="item-list">
-                        <h3>Personnel</h3>
-                        <p><strong>Morale: <span style="color:${loyaltyColor};">${gameData.personnelLoyalty.toFixed(1)}%</span></strong></p>
-                        <p>Producers: ${gameData.personnel.producers}</p>
-                        <button onclick="handleButtonClick(hirePersonnel, 'producer')">Hire ($500)</button>
-                        <p>Dealers: ${gameData.personnel.dealers}</p>
-                        <button onclick="handleButtonClick(hirePersonnel, 'dealer')">Hire ($750)</button>
-                        <p>Soldiers: ${gameData.personnel.soldiers}</p>
-                        <button onclick="handleButtonClick(hirePersonnel, 'soldier')">Hire ($1000)</button>
-                        <p>Accountants: ${gameData.personnel.accountants}</p>
-                        <button onclick="handleButtonClick(hirePersonnel, 'accountant')">Hire ($2000)</button>
-                        <hr/>
-                        <h3>Victory Progress</h3>
-                        <p>Domination: ${gameData.victory.domination.current}/${gameData.victory.domination.required} Territories</p>
-                        <p>Economic: $${Math.floor(gameData.victory.economic.current)}/$${gameData.victory.economic.required}</p>
-                        <hr/>
-                        <h3>Drug Earnings</h3>
-                        <p>Weed: $${gameData.drugEarnings.weed}/$${gameData.drugEarningCaps.weed}</p>
-                        <p>Meth: $${gameData.drugEarnings.meth}/$${gameData.drugEarningCaps.meth}</p>
-                        <p>Coke: $${gameData.drugEarnings.coke}/$${gameData.drugEarningCaps.coke}</p>
-                        <p>Heroin: $${gameData.drugEarnings.heroin}/$${gameData.drugEarningCaps.heroin}</p>
-                        <p>Fentanyl: $${gameData.drugEarnings.fentanyl}/$${gameData.drugEarningCaps.fentanyl}</p>
-                    </div>
-                `;
+            // Research panel
+            let researchHTML = `<h2>Research & Development</h2>`;
+            if (gameData.researchInProgress) {
+                const r = gameData.research[gameData.researchInProgress];
+                researchHTML += `<p>Research in Progress: ${r.name} (${Math.floor((r.progress / r.time) * 100)}%)</p>`;
             }
-
-            function showTab(tabName) {
-                currentActiveTab = tabName;
-                updateUI();
+            researchHTML += `<div class="item-list">`;
+            for (const [key, research] of Object.entries(gameData.research)) {
+                const canResearch = !research.unlocked && !gameData.researchInProgress && 
+                                   (!research.requires || gameData.research[research.requires].unlocked);
+                researchHTML += `
+                    <div class="list-item">
+                        <strong>${research.name}</strong>
+                        <p>${research.desc}</p>
+                        <p>Cost: $${research.cost} clean money</p>
+                        <p>Time: ${research.time} seconds</p>
+                        <button onclick="handleButtonClick(startResearch, '${key}')" 
+                                ${canResearch ? '' : 'disabled'}>
+                            ${research.unlocked ? 'Researched' : canResearch ? 'Research' : 'Locked'}
+                        </button>
+                    </div>`;
             }
+            researchHTML += `</div>`;
+            document.getElementById('research-panel').innerHTML = researchHTML;
 
-            function handleButtonClick(actionFn, ...args) {
-                if (isPaused) {
-                    showNotification("Game is paused!", "orange");
-                    return;
-                }
-                actionFn(...args);
-                if (gameMode === 'single') updateUI();
+            // Personnel panel
+            let loyaltyColor = gameData.personnelLoyalty > 60 ? 'lightgreen' : gameData.personnelLoyalty > 30 ? 'orange' : 'red';
+            document.getElementById('personnel-inventory').innerHTML = `
+                <h2>Empire Stats</h2>
+                <div class="item-list">
+                    <h3>Personnel</h3>
+                    <p><strong>Morale: <span style="color:${loyaltyColor};">${gameData.personnelLoyalty.toFixed(1)}%</span></strong></p>
+                    <p>Producers: ${gameData.personnel.producers}</p>
+                    <button onclick="handleButtonClick(hirePersonnel, 'producer')">Hire ($500)</button>
+                    <p>Dealers: ${gameData.personnel.dealers}</p>
+                    <button onclick="handleButtonClick(hirePersonnel, 'dealer')">Hire ($750)</button>
+                    <p>Soldiers: ${gameData.personnel.soldiers}</p>
+                    <button onclick="handleButtonClick(hirePersonnel, 'soldier')">Hire ($1000)</button>
+                    <p>Accountants: ${gameData.personnel.accountants}</p>
+                    <button onclick="handleButtonClick(hirePersonnel, 'accountant')">Hire ($2000)</button>
+                    <hr/>
+                    <h3>Victory Progress</h3>
+                    <p>Domination: ${gameData.victory.domination.current}/${gameData.victory.domination.required} Territories</p>
+                    <p>Economic: $${Math.floor(gameData.victory.economic.current)}/$${gameData.victory.economic.required}</p>
+                    <hr/>
+                    <h3>Drug Earnings</h3>
+                    <p>Weed: $${gameData.drugEarnings.weed}/$${gameData.drugEarningCaps.weed}</p>
+                    <p>Meth: $${gameData.drugEarnings.meth}/$${gameData.drugEarningCaps.meth}</p>
+                    <p>Coke: $${gameData.drugEarnings.coke}/$${gameData.drugEarningCaps.coke}</p>
+                    <p>Heroin: $${gameData.drugEarnings.heroin}/$${gameData.drugEarningCaps.heroin}</p>
+                    <p>Fentanyl: $${gameData.drugEarnings.fentanyl}/$${gameData.drugEarningCaps.fentanyl}</p>
+                </div>
+            `;
+        }
+
+        function showTab(tabName) {
+            currentActiveTab = tabName;
+            updateUI();
+        }
+
+        function handleButtonClick(actionFn, ...args) {
+            if (isPaused) {
+                showNotification("Game is paused!", "orange");
+                return;
             }
+            actionFn(...args);
+            updateUI();
+        }
 
-            function showNotification(msg, color = "#0f0") {
-                const n = document.createElement("div");
-                n.textContent = msg;
-                n.style.color = "black";
-                n.style.background = color;
-                n.style.padding = "5px 10px";
-                n.style.borderRadius = "5px";
-                n.style.marginTop = "5px";
-                document.getElementById('notifications').appendChild(n);
-                setTimeout(() => n.remove(), 4000);
+        function showNotification(msg, color = "#0f0") {
+            const n = document.createElement("div");
+            n.textContent = msg;
+            n.style.color = "black";
+            n.style.background = color;
+            n.style.padding = "5px 10px";
+            n.style.borderRadius = "5px";
+            n.style.marginTop = "5px";
+            document.getElementById('notifications').appendChild(n);
+            setTimeout(() => n.remove(), 4000);
+        }
+
+        function togglePause() {
+            if (gameData.gameOver) return;
+            isPaused = !isPaused;
+            const pauseBtn = document.getElementById('pauseBtn');
+            const pauseOverlay = document.getElementById('pauseOverlay');
+            if (isPaused) {
+                clearInterval(gameLoopInterval);
+                pauseBtn.textContent = "Resume";
+                pauseOverlay.style.display = 'flex';
+            } else {
+                gameLoopInterval = setInterval(gameLoop, 2000);
+                pauseBtn.textContent = "Pause";
+                pauseOverlay.style.display = 'none';
             }
+        }
 
-            function togglePause() {
-                if (gameData.gameOver) return;
-                isPaused = !isPaused;
-                const pauseBtn = document.getElementById('pauseBtn');
-                const pauseOverlay = document.getElementById('pauseOverlay');
-                if (isPaused) {
-                    clearInterval(gameLoopInterval);
-                    pauseBtn.textContent = "Resume";
-                    pauseOverlay.style.display = 'flex';
-                } else {
-                    gameLoopInterval = setInterval(gameLoop, 2000);
-                    pauseBtn.textContent = "Pause";
-                    pauseOverlay.style.display = 'none';
-                }
-            }
-
-            // Make functions globally available for HTML onclick handlers
-            window.handleButtonClick = handleButtonClick;
-            window.showTab = showTab;
-            window.togglePause = togglePause;
-            window.takeLoan = takeLoan;
-            window.buyStock = buyStock;
-            window.sellStock = sellStock;
-            window.depositMoney = depositMoney;
-            window.withdrawMoney = withdrawMoney;
-            window.repairEquipment = repairEquipment;
-            window.buyResources = buyResources;
-        });
+        // Make functions globally available for HTML onclick handlers
+        window.handleButtonClick = handleButtonClick;
+        window.showTab = showTab;
+        window.togglePause = togglePause;
+        window.takeLoan = takeLoan;
+        window.buyStock = buyStock;
+        window.sellStock = sellStock;
+        window.depositMoney = depositMoney;
+        window.withdrawMoney = withdrawMoney;
+        window.repairEquipment = repairEquipment;
+        window.buyResources = buyResources;
+        window.startGame = startGame;
+        window.showMenuSection = showMenuSection;
+        window.loadGame = loadGame;
+        window.deleteSave = deleteSave;
+        window.saveGame = saveGame;
+        window.returnToMenu = returnToMenu;
     </script>
 </body>
 </html>
