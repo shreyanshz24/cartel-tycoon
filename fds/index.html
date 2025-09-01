@@ -274,7 +274,7 @@
       <input type="number" id="aiCount" value="2" min="1" max="3"
         style="background:#000;border:1px solid #0f0;color:#0f0;padding:10px;text-align:center;font-family:'Courier New', monospace;margin:10px;">
     </div>
-    <button onclick="startGame('single')" style="width: 300px;">Single Player</button>
+    <button id="startGameBtn" style="width: 300px;">Single Player</button>
   </div>
 
   <div id="game" class="container">
@@ -316,6 +316,8 @@
   <div id="youtube-player-container"></div>
 
   <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        
     // =================================================================================
     // SECTION 1: CORE GAME SETUP & STATE
     // =================================================================================
@@ -324,10 +326,41 @@
     let gameLoopInterval = null;
     let isPaused = false;
     let gameMode = 'single';
-    let currentActiveTab = null; 
+    let currentActiveTab = 'map-panel';
     let currentActiveSubTab = 'lieutenants-subpanel';
     let isAssigningLieutenant = -1;
-    let ytPlayer; // Will hold the YouTube player object
+    let ytPlayer;
+
+    // Make functions globally accessible for HTML onclicks
+    window.startGame = startGame;
+    window.togglePause = togglePause;
+    window.prevSong = prevSong;
+    window.nextSong = nextSong;
+    window.handleButtonClick = handleButtonClick;
+    window.showTab = showTab;
+    window.showSubTab = showSubTab;
+    window.upgradeLab = upgradeLab;
+    window.upgradeWorkshop = upgradeWorkshop;
+    window.manufactureArms = manufactureArms;
+    window.sellArms = sellArms;
+    window.fightBack = fightBack;
+    window.hirePersonnel = hirePersonnel;
+    window.attackTerritory = attackTerritory;
+    window.assignLieutenant = assignLieutenant;
+    window.proposeDeal = proposeDeal;
+    window.startResearch = startResearch;
+    window.sendSpyMission = sendSpyMission;
+    window.buyProperty = buyProperty;
+
+    document.getElementById('startGameBtn').addEventListener('click', () => startGame('single'));
+
+    document.addEventListener("keydown", function(e) {
+        if (!gameData || Object.keys(gameData).length === 0) return; // Cheats only work once game starts
+        if (e.key === "1") { gameData.money += 100000; showNotification("Cheat: +100k Dirty", "lightgreen"); updateUI(); }
+        if (e.key === "2") { gameData.whiteMoney += 100000; showNotification("Cheat: +100k Clean", "lightgreen"); updateUI(); }
+        if (e.key === "3") { gameData.personnel.soldiers += 10; showNotification("Cheat: +10 Soldiers", "lightgreen"); updateUI(); }
+        if (e.key === "4") { gameData.heat = 0; showNotification("Cheat: Heat Reset", "lightblue"); updateUI(); }
+    });
 
     function resetGameData(aiCount = 2) {
       gameData = {
@@ -337,7 +370,8 @@
         labLevel: 0, armsTier: 0, currentDrug: "weed",
         personnel: { producers: 0, dealers: 5, soldiers: 2, spies: 0 },
         lieutenants: [],
-        personnelLoyalty: 70, payrollDue: 100,
+        properties: [],
+        personnelLoyalty: 70,
         territories: [],
         aiPlayers: [],
         research: {
@@ -362,8 +396,17 @@
         ],
         gameOver: false
       };
-      // Initialize map, player, and AI territories
-      const territoryNames = ["Docks", "Warehouse District", "Downtown", "Suburbs", "Projects", "West Side", "East Side", "Market", "Old Town", "The Strip", "Airport", "Industrial Park", "Southside", "Northbridge", "Chinatown"]; for (let i = 0; i < 15; i++) { gameData.territories.push({ id: i, name: territoryNames[i], owner: 'Neutral', value: Math.floor(Math.random() * 50) + 10, soldiers: 0, lieutenant: -1, business: null }) } gameData.territories[0].owner = 'Player'; gameData.territories[0].soldiers = 1; const aiNames = ["El Jefe", "La Reina", "The Ghost"]; for (let i = 0; i < aiCount; i++) { const aiId = `AI-${i + 1}`; gameData.territories[i + 1].owner = aiId; gameData.territories[i + 1].soldiers = 2; gameData.aiPlayers.push({ id: aiId, name: aiNames[i], money: 3000, powerLevel: 1, relationship: 0, spies: 1 }) }
+      
+      const territoryNames = ["Docks", "Warehouse District", "Downtown", "Suburbs", "Projects", "West Side", "East Side", "Market", "Old Town", "The Strip", "Airport", "Industrial Park", "Southside", "Northbridge", "Chinatown"]; 
+      for (let i = 0; i < 15; i++) { 
+          gameData.territories.push({ id: i, name: territoryNames[i], owner: 'Neutral', value: Math.floor(Math.random() * 50) + 10, soldiers: Math.floor(Math.random() * 4), lieutenant: -1, business: null });
+      } 
+      
+      const aiNames = ["El Jefe", "La Reina", "The Ghost"]; 
+      for (let i = 0; i < aiCount; i++) { 
+          const aiId = `AI-${i + 1}`; 
+          gameData.aiPlayers.push({ id: aiId, name: aiNames[i], money: 3000, powerLevel: 1, relationship: 0, spies: 1 });
+      }
     }
 
     // =================================================================================
@@ -371,19 +414,18 @@
     // =================================================================================
 
     function startGame(mode) {
-  playerName = document.getElementById('playerName').value || "Player";
-  gameMode = mode;
-  document.getElementById('menu').style.display = 'none';
-  if (gameMode === 'single') {
-    const aiCount = parseInt(document.getElementById('aiCount').value) || 2;
-    document.getElementById('game').style.display = 'block';
-    resetGameData(aiCount);
-    isPaused = false;
-    updateUI(); // ✅ render UI before loop starts
-    gameLoopInterval = setInterval(gameLoop, 2000);
-  }
-}
-
+      playerName = document.getElementById('playerName').value || "Player";
+      gameMode = mode;
+      document.getElementById('menu').style.display = 'none';
+      if (gameMode === 'single') {
+        const aiCount = parseInt(document.getElementById('aiCount').value) || 2;
+        document.getElementById('game').style.display = 'block';
+        resetGameData(aiCount);
+        isPaused = false;
+        gameLoopInterval = setInterval(gameLoop, 2000);
+        updateUI();
+      }
+    }
 
     function gameLoop() {
       if (isPaused || gameData.gameOver) return;
@@ -395,13 +437,8 @@
       runAiTurns();
       updateResearch();
       checkVictoryConditions();
-
-      // Heat naturally decays
       if (gameData.heat > 0) gameData.heat -= 1;
-
-      // Trigger raid if too high
       if (gameData.heat >= 100 && Math.random() > 0.7) triggerRaid();
-      
       updateUI();
     }
 
@@ -431,44 +468,24 @@
     var firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-    function onYouTubeIframeAPIReady() {
+    window.onYouTubeIframeAPIReady = function() {
       ytPlayer = new YT.Player('youtube-player-container', {
-        height: '1',
-        width: '1',
-        playerVars: {
-          'autoplay': 1,
-          'controls': 0,
-          'loop': 1,
-          'listType': 'playlist',
-          'list': 'OLAK5uy_k2u2jXntExJQY_M3yTcX2AMmsJJSsDBB0'
-        },
-        events: {
-          'onReady': onPlayerReady,
-          'onStateChange': onPlayerStateChange
-        }
+        height: '1', width: '1',
+        playerVars: { 'autoplay': 1, 'controls': 0, 'loop': 1, 'listType': 'playlist', 'list': 'OLAK5uy_k2u2jXntExJQY_M3yTcX2AMmsJJSsDBB0' },
+        events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange }
       });
     }
 
-    function onPlayerReady(event) {
-      event.target.setVolume(50); // Set a reasonable volume
-      event.target.playVideo();
-    }
+    function onPlayerReady(event) { event.target.setVolume(50); event.target.playVideo(); }
 
     function onPlayerStateChange(event) {
       if (event.data == YT.PlayerState.PLAYING) {
-        const videoData = ytPlayer.getVideoData();
-        document.getElementById('song-title').textContent = videoData.title;
+        document.getElementById('song-title').textContent = ytPlayer.getVideoData().title;
       }
     }
 
-    function nextSong() {
-      if (ytPlayer) ytPlayer.nextVideo();
-    }
-
-    function prevSong() {
-      if (ytPlayer) ytPlayer.previousVideo();
-    }
-
+    function nextSong() { if (ytPlayer) ytPlayer.nextVideo(); }
+    function prevSong() { if (ytPlayer) ytPlayer.previousVideo(); }
 
     // =================================================================================
     // SECTION 4: CORE GAMEPLAY LOOPS
@@ -477,50 +494,39 @@
     
     function runProduction() {
       const drugPrices = { weed: 10, meth: 50, coke: 200, heroin: 500, fentanyl: 1500 };
-      const chemicalCosts = { weed: 0, meth: 1, coke: 2, heroin: 4, fentanyl: 8 };
-
       let productionRate = (gameData.personnel.producers * 0.1) * (gameData.labLevel + 1);
-      if (gameData.research.logistics1.unlocked) productionRate *= 1.1;
-
-      let chemicalsNeeded = Math.ceil(productionRate * chemicalCosts[gameData.currentDrug]);
-      
-      if (gameData.inventory.chemicals >= chemicalsNeeded) {
-        gameData.inventory.chemicals -= chemicalsNeeded;
-        gameData.inventory[gameData.currentDrug] += productionRate;
-      }
-      
       let sellRate = gameData.personnel.dealers * 0.5;
       let soldAmount = Math.min(gameData.inventory[gameData.currentDrug], sellRate);
       if (soldAmount > 0) {
           gameData.inventory[gameData.currentDrug] -= soldAmount;
           let earnings = soldAmount * drugPrices[gameData.currentDrug];
           gameData.money += earnings;
-          gameData.heat += soldAmount * 0.05 * (gameData.labLevel + 1); // Selling creates heat
+          gameData.heat += soldAmount * 0.05 * (gameData.labLevel + 1);
       }
     }
 
     function runLaundering() {
-        let launderingCap = gameData.lieutenants.length * 1000; // Each LT can launder $1k per tick
-        if (gameData.research.laundering1.unlocked) launderingCap *= 1.5;
-        let amountToLaunder = Math.min(gameData.money, launderingCap);
-        if(amountToLaunder > 0) {
-            gameData.money -= amountToLaunder;
-            gameData.whiteMoney += amountToLaunder * 0.7; // 30% cut
-        }
+      let launderingCap = gameData.lieutenants.length * 1000;
+      if (gameData.research.laundering1.unlocked) launderingCap *= 1.5;
+      if (gameData.properties) {
+        launderingCap += gameData.properties.reduce((sum, p) => sum + p.cleanRate, 0);
+      }
+      let amountToLaunder = Math.min(gameData.money, launderingCap);
+      if(amountToLaunder > 0) {
+          gameData.money -= amountToLaunder;
+          gameData.whiteMoney += amountToLaunder * 0.7;
+      }
     }
 
     function runPersonnelSystem() {
         const totalPersonnel = gameData.personnel.producers + gameData.personnel.dealers + gameData.personnel.soldiers + gameData.personnel.spies;
         const wages = totalPersonnel * 50;
-        gameData.payrollDue += wages;
-
-        if (gameData.money >= gameData.payrollDue) {
-            gameData.money -= gameData.payrollDue;
-            gameData.payrollDue = 0;
-            if (gameData.personnelLoyalty < 100) gameData.personnelLoyalty += 1;
+        if (gameData.money >= wages) {
+          gameData.money -= wages;
+          if (gameData.personnelLoyalty < 100) gameData.personnelLoyalty += 1;
         } else {
-            if (gameData.personnelLoyalty > 0) gameData.personnelLoyalty -= 5;
-            showNotification("Can't afford payroll! Morale is dropping!", "red");
+          gameData.personnelLoyalty = Math.max(0, gameData.personnelLoyalty - 5);
+          showNotification("Can't afford payroll! Morale is dropping!", "red");
         }
     }
 
@@ -542,43 +548,32 @@
             if (type === 'lieutenant') {
                 const names = ["Rico", "Chico", "Lefty", "Sonny", "Benny", "Marco", "Vito", "Luca"];
                 gameData.lieutenants.push({ name: names[Math.floor(Math.random() * names.length)], skill: 'logistics' });
-            } else {
-                gameData.personnel[type + 's']++;
-            }
+            } else { gameData.personnel[type + 's']++; }
             showNotification(`Hired a new ${type}.`, "lightgreen");
-        } else {
-            showNotification(`Not enough money to hire a ${type}.`, "orange");
-        }
+        } else { showNotification(`Not enough money to hire a ${type}.`, "orange"); }
     }
 
-    function assignLieutenant(ltIndex) { /* Placeholder */ showNotification("Assign feature coming soon.", "lightblue"); }
+    function assignLieutenant(ltIndex) { showNotification("Assign feature coming soon.", "lightblue"); }
     
     function upgradeLab() {
         const costs = [25000, 100000, 500000, 2000000, 10000000];
         const drugs = ["weed", "meth", "coke", "heroin", "fentanyl"];
-        if (gameData.labLevel >= costs.length) {
-            showNotification("Lab is max level.", "lightblue"); return;
-        }
+        if (gameData.labLevel >= costs.length) { showNotification("Lab is max level.", "lightblue"); return; }
         let cost = costs[gameData.labLevel];
         if (gameData.money >= cost) {
             gameData.money -= cost;
             gameData.labLevel++;
             gameData.currentDrug = drugs[gameData.labLevel];
             showNotification(`Lab upgraded to produce ${gameData.currentDrug}!`, "lightgreen");
-        } else {
-            showNotification(`Need $${cost} to upgrade lab.`, "orange");
-        }
+        } else { showNotification(`Need $${cost} to upgrade lab.`, "orange"); }
     }
 
-    function upgradeWorkshop() { /* Placeholder */ showNotification("Workshop feature coming soon.", "lightblue"); }
-    function manufactureArms() { /* Placeholder */ showNotification("Arms feature coming soon.", "lightblue"); }
-    function sellArms() { /* Placeholder */ showNotification("Arms feature coming soon.", "lightblue"); }
+    function upgradeWorkshop() { showNotification("Workshop feature coming soon.", "lightblue"); }
+    function manufactureArms() { showNotification("Arms feature coming soon.", "lightblue"); }
+    function sellArms() { showNotification("Arms feature coming soon.", "lightblue"); }
 
     function fightBack() {
-      if (gameData.personnel.soldiers < 1) {
-        showNotification("You have no soldiers to fight back with!", "orange");
-        return;
-      }
+      if (gameData.personnel.soldiers < 1) { showNotification("You have no soldiers to fight back with!", "orange"); return; }
       showNotification("You're fighting back against the heat!");
       if (Math.random() > 0.5) {
         showNotification("You fought back successfully! Heat rose by 15.", "lightgreen");
@@ -590,59 +585,63 @@
       }
     }
 
-    function attackTerritory(territoryId) { /* Placeholder */ showNotification("Attack feature coming soon.", "lightblue"); }
-    function openTerritoryModal(territoryId) { /* Placeholder */ showNotification("Territory details coming soon.", "lightblue"); }
-    function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
-    function buildBusiness(territoryId, type) { /* Placeholder */ showNotification("Business feature coming soon.", "lightblue"); }
+    function attackTerritory(territoryId) {
+      const territory = gameData.territories[territoryId];
+      if (territory.owner === 'Player') { showNotification("You already control this territory.", "orange"); return; }
+      if (gameData.personnel.soldiers < 1) { showNotification("You need soldiers to take territory!", "orange"); return; }
+      let attackPower = gameData.personnel.soldiers;
+      let defensePower = territory.soldiers;
+      if (attackPower > defensePower) {
+        territory.owner = 'Player';
+        territory.soldiers = Math.max(1, Math.floor(attackPower / 2)); // Leave at least 1 soldier
+        gameData.personnel.soldiers = Math.ceil(gameData.personnel.soldiers / 2);
+        showNotification(`You captured ${territory.name}!`, "lightgreen");
+      } else {
+        gameData.personnel.soldiers = Math.max(0, gameData.personnel.soldiers - defensePower);
+        showNotification("Your attack failed! You lost soldiers.", "red");
+      }
+    }
+
+    function buyProperty(name, cost, cleanRate) {
+      if (gameData.money < cost) { showNotification("Not enough dirty money!", "orange"); return; }
+      gameData.money -= cost;
+      if (!gameData.properties) gameData.properties = [];
+      gameData.properties.push({ name, cleanRate });
+      showNotification(`${name} purchased!`, "lightgreen");
+    }
 
     // =================================================================================
     // SECTION 6: ESPIONAGE, EVENTS, AI, DIPLOMACY
     // =================================================================================
     function sendSpyMission(type) {
-      if (gameData.personnel.spies <= 0) {
-        showNotification("You need spies for this mission.", "orange");
-        return;
-      }
-      gameData.personnel.spies--; // The spy is consumed on the mission
+      if (gameData.personnel.spies <= 0) { showNotification("You need spies for this mission.", "orange"); return; }
+      gameData.personnel.spies--;
       showNotification("A spy has been dispatched...", "lightblue");
       let chance = Math.random();
-      if (type === "intel" && chance > 0.4) {
-        showNotification("SUCCESS: Your spies stole rival production intel!", "lightgreen");
-      } else if (type === "cops" && chance > 0.6) {
-        showNotification("SUCCESS: You bribed the cops successfully! Heat is down.", "lightgreen");
-        gameData.heat = Math.max(0, gameData.heat - 25);
-      } else if (type === "rival" && chance > 0.7) {
-        showNotification("SUCCESS: Rival operations sabotaged!", "lightgreen");
-      } else {
-        showNotification("FAILURE: Your spy was caught! Retaliation incoming.", "red");
-        gameData.heat += 20;
-      }
+      if (type === "intel" && chance > 0.4) { showNotification("SUCCESS: Your spies stole rival production intel!", "lightgreen");
+      } else if (type === "cops" && chance > 0.6) { showNotification("SUCCESS: You bribed the cops successfully! Heat is down.", "lightgreen"); gameData.heat = Math.max(0, gameData.heat - 25);
+      } else if (type === "rival" && chance > 0.7) { showNotification("SUCCESS: Rival operations sabotaged!", "lightgreen");
+      } else { showNotification("FAILURE: Your spy was caught! Retaliation incoming.", "red"); gameData.heat += 20; }
     }
-    
-    const events = [ { title: 'Shakedown', text: 'A local crew demands protection money.', options: [{ text: 'Pay them off', action: 'pay' }, { text: 'Tell them to get lost', action: 'refuse' }] }];
-    function triggerRandomEvent() { /* Placeholder */ }
-    function resolveEvent(action) { /* Placeholder */ }
     
     function triggerRaid() {
         showNotification("POLICE RAID!", "red");
-        gameData.heat += 30; // Heat spikes from the raid
+        gameData.heat += 30;
         const moneyLost = Math.floor(gameData.money * 0.2);
         gameData.money -= moneyLost;
         const dealersLost = Math.min(gameData.personnel.dealers, 2);
         gameData.personnel.dealers -= dealersLost;
         showNotification(`You lost $${moneyLost} and ${dealersLost} dealers!`, "red");
-        if (gameData.heat >= 200) {
-            triggerGameOver("The raid was too much! You're BUSTED!");
-        }
+        if (gameData.heat >= 200) { triggerGameOver("The raid was too much! You're BUSTED!"); }
     }
 
     function runAiTurns() {
         gameData.aiPlayers.forEach(ai => {
             ai.money += 500 * ai.powerLevel;
             if (Math.random() > 0.8) { 
-                const neutralTerritories = gameData.territories.filter(t => t.owner === 'Neutral');
-                if (neutralTerritories.length > 0) {
-                    const target = neutralTerritories[Math.floor(Math.random() * neutralTerritories.length)];
+                const weakTerritories = gameData.territories.filter(t => t.owner !== ai.id && t.soldiers < (ai.powerLevel * 2));
+                if (weakTerritories.length > 0) {
+                    const target = weakTerritories[Math.floor(Math.random() * weakTerritories.length)];
                     target.owner = ai.id;
                     target.soldiers = ai.powerLevel;
                     showNotification(`${ai.name} has taken control of ${target.name}!`, "orange");
@@ -651,7 +650,7 @@
         });
     }
 
-    function proposeDeal(aiIndex) { /* Placeholder */ showNotification("Diplomacy feature coming soon.", "lightblue"); }
+    function proposeDeal(aiIndex) { showNotification("Diplomacy feature coming soon.", "lightblue"); }
 
     // =================================================================================
     // SECTION 7: RESEARCH & DEVELOPMENT
@@ -662,7 +661,6 @@
         if (gameData.whiteMoney < r.cost) { showNotification(`Need $${r.cost} in clean money for research.`, "orange"); return; }
         const requirementMet = r.requires ? gameData.research[r.requires].unlocked : true;
         if (!requirementMet) { showNotification("Previous technology not researched yet.", "orange"); return; }
-
         gameData.whiteMoney -= r.cost;
         gameData.researchInProgress = researchId;
         showNotification(`Research started on ${r.name}.`, "lightblue");
@@ -671,7 +669,7 @@
     function updateResearch() {
         if (gameData.researchInProgress) {
             const r = gameData.research[gameData.researchInProgress];
-            r.progress += 2; // 2 seconds per game tick
+            r.progress += 2;
             if (r.progress >= r.time) {
                 r.unlocked = true;
                 r.progress = r.time;
@@ -687,46 +685,39 @@
     function checkVictoryConditions() {
         if (gameData.gameOver) return;
         gameData.victory.domination.current = gameData.territories.filter(t => t.owner === 'Player').length;
-        if (gameData.victory.domination.current >= gameData.victory.domination.required) {
-            triggerGameOver("VICTORY! You control the city.");
-        }
+        if (gameData.victory.domination.current >= gameData.victory.domination.required) { triggerGameOver("VICTORY! You control the city."); }
         gameData.victory.economic.current = gameData.whiteMoney;
-        if (gameData.victory.economic.current >= gameData.victory.economic.required) {
-            triggerGameOver("VICTORY! Your financial empire is untouchable.");
-        }
+        if (gameData.victory.economic.current >= gameData.victory.economic.required) { triggerGameOver("VICTORY! Your financial empire is untouchable."); }
     }
 
     // =================================================================================
     // SECTION 9: UI RENDERING
     // =================================================================================
-    function showTab(tabName, event) {
-        currentActiveTab = tabName;
-        updateUI();
-    }
-
-    function showSubTab(tabName, event) {
-        currentActiveSubTab = tabName;
-        updateUI();
-    }
+    function showTab(tabName, event) { currentActiveTab = tabName; updateUI(); }
+    function showSubTab(tabName, event) { currentActiveSubTab = tabName; updateUI(); }
 
     function updateUI() {
-      if (!gameData || gameData.gameOver) return;
-      if (!currentActiveTab) currentActiveTab = 'map-panel';
+      if (!gameData || !gameData.territories || gameData.gameOver) return;
 
       document.getElementById('top-stats').innerHTML = `<p>💰 Dirty: $${Math.floor(gameData.money)}</p> <p>💵 Clean: $${Math.floor(gameData.whiteMoney)}</p> <p>🔥 Heat: ${Math.floor(gameData.heat)}</p>`;
-      document.getElementById('operations').innerHTML = `<h2>Operations</h2> <div class="item-list"> <h3>Drug Operation</h3> <p>Current Production: ${gameData.currentDrug.toUpperCase()}</p> <button onclick="handleButtonClick(upgradeLab)">Upgrade Lab (Lvl ${gameData.labLevel})</button> <h3>Arms Trafficking</h3> <p>Workshop Tier: ${gameData.armsTier}</p> <button onclick="handleButtonClick(upgradeWorkshop)">Upgrade Workshop</button> <button onclick="handleButtonClick(manufactureArms)">Manufacture Arms</button> <button onclick="handleButtonClick(sellArms)">Sell All Arms</button> <h3>Law Enforcement</h3> <button onclick="handleButtonClick(fightBack)">Fight Back</button></div>`;
+      document.getElementById('operations').innerHTML = `<h2>Operations</h2> <div class="item-list"> <h3>Drug Operation</h3> <p>Current Production: ${gameData.currentDrug.toUpperCase()}</p> <button onclick="handleButtonClick(upgradeLab)">Upgrade Lab (Lvl ${gameData.labLevel})</button> <h3>Arms Trafficking</h3> <p>Workshop Tier: ${gameData.armsTier}</p> <button onclick="handleButtonClick(upgradeWorkshop)">Upgrade Workshop</button> <h3>Law Enforcement</h3> <button onclick="handleButtonClick(fightBack)">Fight Back</button></div>`;
 
-      document.getElementById('center-panel').innerHTML = `<div class="tab-buttons"> <button class="tab-link" onclick="showTab('map-panel', event)">Map</button> <button class="tab-link" onclick="showTab('management-panel', event)">Management</button> <button class="tab-link" onclick="showTab('research-panel', event)">Research</button> <button class="tab-link" onclick="showTab('espionage-panel', event)">Espionage</button> </div> <div id="map-panel" class="tab-content"></div> <div id="management-panel" class="tab-content"></div> <div id="research-panel" class="tab-content"></div> <div id="espionage-panel" class="tab-content"></div>`;
+      document.getElementById('center-panel').innerHTML = `<div class="tab-buttons"> <button class="tab-link" onclick="showTab('map-panel', event)">Map</button> <button class="tab-link" onclick="showTab('management-panel', event)">Management</button> <button class="tab-link" onclick="showTab('llc-panel', event)">LLC</button> <button class="tab-link" onclick="showTab('research-panel', event)">Research</button> <button class="tab-link" onclick="showTab('espionage-panel', event)">Espionage</button> </div> <div id="map-panel" class="tab-content"></div> <div id="management-panel" class="tab-content"></div> <div id="llc-panel" class="tab-content"></div> <div id="research-panel" class="tab-content"></div> <div id="espionage-panel" class="tab-content"></div>`;
       
       let espionagePanelHTML = `<h2>Espionage</h2><p>Spies Available: ${gameData.personnel.spies}</p><button onclick="handleButtonClick(hirePersonnel, 'spy')">Hire Spy ($25,000)</button><hr/><h3>Missions</h3><button onclick="handleButtonClick(sendSpyMission, 'intel')">Steal Intel</button><button onclick="handleButtonClick(sendSpyMission, 'cops')">Bribe Cops</button><button onclick="handleButtonClick(sendSpyMission, 'rival')">Sabotage Rival</button>`;
       document.getElementById('espionage-panel').innerHTML = espionagePanelHTML;
 
+      let llcHTML = `<h2>Property Laundering</h2><p>Buy businesses to clean dirty money.</p><div class="item-list"></div>`;
+      let propertiesHTML = gameData.properties.map(p => `<p><strong>${p.name}</strong> (Cleans $${p.cleanRate}/tick)</p>`).join('');
+      let propertyButtonsHTML = `<button onclick="buyProperty('Car Wash', 20000, 500)">Car Wash ($20,000)</button><button onclick="buyProperty('Nightclub', 100000, 2500)">Nightclub ($100,000)</button><button onclick="buyProperty('Casino', 1000000, 20000)">Casino ($1,000,000)</button>`;
+      document.getElementById('llc-panel').innerHTML = `<h2>Property Laundering</h2><p>Buy businesses to clean dirty money.</p><hr><h3>Your Properties</h3><div class="item-list">${propertiesHTML || '<p>None</p>'}</div><hr><h3>For Sale</h3>${propertyButtonsHTML}`;
+
       let loyaltyColor = gameData.personnelLoyalty > 60 ? 'lightgreen' : gameData.personnelLoyalty > 30 ? 'orange' : 'red';
       document.getElementById('personnel-inventory').innerHTML = `<h2>Empire Stats</h2> <div class="item-list"><h3>Personnel</h3> <p><strong>Morale: <span style="color:${loyaltyColor};">${gameData.personnelLoyalty.toFixed(1)}%</span></strong></p> <p>Producers: ${gameData.personnel.producers}</p> <button onclick="handleButtonClick(hirePersonnel, 'producer')">Hire ($500)</button> <p>Dealers: ${gameData.personnel.dealers}</p> <button onclick="handleButtonClick(hirePersonnel, 'dealer')">Hire ($750)</button><p>Soldiers: ${gameData.personnel.soldiers}</p><button onclick="handleButtonClick(hirePersonnel, 'soldier')">Hire ($1000)</button><hr><h3>Victory Progress</h3><p>Domination: ${gameData.victory.domination.current}/${gameData.victory.domination.required} Territories</p><p>Economic: $${Math.floor(gameData.victory.economic.current)}/$${gameData.victory.economic.required}</p></div>`;
 
-      let mapHTML = `<h2>City Map ${isAssigningLieutenant > -1 ? '(ASSIGNING)' : ''}</h2><div id="map-grid">`;
+      let mapHTML = `<h2>City Map</h2><p>Click a territory to attack.</p><div id="map-grid">`;
       const ownerColors = { 'Player': 'player', 'AI-1': 'ai-1', 'AI-2': 'ai-2', 'AI-3': 'ai-3', 'Neutral': 'neutral' };
-      gameData.territories.forEach(t => { let assignClass = isAssigningLieutenant > -1 && t.owner === 'Player' ? 'assign-mode' : ''; let ownerName = t.owner; if(t.owner.startsWith('AI-')) ownerName = gameData.aiPlayers.find(ai => ai.id === t.owner).name; mapHTML += `<div class="territory ${ownerColors[t.owner] || 'neutral'}-controlled ${assignClass}" onclick="handleButtonClick(openTerritoryModal, ${t.id})"><span>${t.name}</span><span>${t.lieutenant > -1 ? `★ ${gameData.lieutenants[t.lieutenant].name}` : `⚔️ ${t.soldiers}`}</span></div>`; });
+      gameData.territories.forEach(t => { mapHTML += `<div class="territory ${ownerColors[t.owner] || 'neutral'}-controlled" onclick="handleButtonClick(attackTerritory, ${t.id})"><span>${t.name}</span><span>${t.owner}</span><span>⚔️ ${t.soldiers}</span></div>`; });
       mapHTML += `</div>`;
       document.getElementById('map-panel').innerHTML = mapHTML;
 
@@ -740,25 +731,15 @@
       document.getElementById('diplomacy-subpanel').innerHTML = diplomacyHTML;
 
       let researchHTML = `<h2>Research & Development</h2><div id="research-grid" style="display:flex; flex-direction:column; gap:10px;">`;
-      const trees = {
-        'Logistics': ['logistics1', 'logistics2'],
-        'Military': ['military1', 'military2'],
-        'Laundering': ['laundering1']
-      };
+      const trees = { 'Logistics': ['logistics1', 'logistics2'], 'Military': ['military1', 'military2'], 'Laundering': ['laundering1'] };
       for (const treeName in trees) {
         researchHTML += `<div><h3>${treeName}</h3>`;
         trees[treeName].forEach(researchId => {
           const r = gameData.research[researchId];
           let buttonHTML = '';
-          if (r.unlocked) {
-            buttonHTML = `<button disabled>Completed</button>`;
-          } else if (gameData.researchInProgress === researchId) {
-            const progressPercent = (r.progress / r.time) * 100;
-            buttonHTML = `<div class="progress-bar" style="width:100%;background:#222;height:20px;border:1px solid #444;"><div class="progress-fill" style="height:100%;background:var(--main-green);width:${progressPercent}%"></div></div>`;
-          } else {
-            const requirementMet = r.requires ? gameData.research[r.requires].unlocked : true;
-            buttonHTML = `<button onclick="handleButtonClick(startResearch, '${researchId}')" ${!requirementMet ? 'disabled' : ''}>Research ($${r.cost} Clean)</button>`;
-          }
+          if (r.unlocked) { buttonHTML = `<button disabled>Completed</button>`;
+          } else if (gameData.researchInProgress === researchId) { const progressPercent = (r.progress / r.time) * 100; buttonHTML = `<div class="progress-bar" style="width:100%;background:#222;height:20px;border:1px solid #444;"><div style="height:100%;background:var(--main-green);width:${progressPercent}%"></div></div>`;
+          } else { const requirementMet = r.requires ? gameData.research[r.requires].unlocked : true; buttonHTML = `<button onclick="handleButtonClick(startResearch, '${researchId}')" ${!requirementMet ? 'disabled' : ''}>Research ($${r.cost} Clean)</button>`; }
           researchHTML += `<div class="research-item" style="border:1px solid var(--border-color);padding:10px;border-radius:5px; margin-top:5px;"><p><strong>${r.name}</strong></p><p style="font-size:0.8rem;">${r.desc}</p>${buttonHTML}</div>`;
         });
         researchHTML += `</div>`;
@@ -766,17 +747,17 @@
       researchHTML += `</div>`;
       document.getElementById('research-panel').innerHTML = researchHTML;
 
-      // Set active tab logic
       document.querySelectorAll('#center-panel .tab-content').forEach(tab => tab.classList.remove('active'));
       document.querySelectorAll('#center-panel > .tab-buttons > .tab-link').forEach(link => link.classList.remove('active'));
-      document.getElementById(currentActiveTab).classList.add('active');
+      const activeTab = document.getElementById(currentActiveTab);
+      if(activeTab) activeTab.classList.add('active');
       const activeLink = document.querySelector(`.tab-link[onclick^="showTab('${currentActiveTab}'"]`);
       if (activeLink) activeLink.classList.add('active');
-
       if (currentActiveTab === 'management-panel') {
         document.querySelectorAll('#management-panel .tab-content').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('#management-panel .tab-link').forEach(link => link.classList.remove('active'));
-        document.getElementById(currentActiveSubTab).classList.add('active');
+        const activeSubTab = document.getElementById(currentActiveSubTab);
+        if(activeSubTab) activeSubTab.classList.add('active');
         const activeSubLink = document.querySelector(`#management-panel .tab-link[onclick^="showSubTab('${currentActiveSubTab}'"]`);
         if (activeSubLink) activeSubLink.classList.add('active');
       }
@@ -787,8 +768,9 @@
     // =================================================================================
     function triggerGameOver(message) { gameData.gameOver = true; clearInterval(gameLoopInterval); document.getElementById('gameOverText').textContent = message; document.getElementById('gameOverScreen').style.display = 'flex'; }
     function showNotification(msg, color = "#0f0") { const n = document.createElement("div"); n.textContent = msg; n.style.color = "black"; n.style.background = color; n.style.padding = "5px 10px"; n.style.borderRadius = "5px"; n.style.marginTop = "5px"; document.getElementById('notifications').appendChild(n); setTimeout(() => n.remove(), 4000); }
+
+    });
   </script>
 </body>
 
 </html>
-
