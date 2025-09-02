@@ -53,7 +53,7 @@
             overflow: auto;
             padding: 20px;
             box-sizing: border-box;
-}
+        }
 
         .menu-section {
             background: rgba(0, 20, 0, 0.8);
@@ -67,18 +67,6 @@
             max-height: 90vh;
             overflow-y: auto;
             box-sizing: border-box;
-}
-
-        .menu-section {
-            background: rgba(0, 20, 0, 0.8);
-            border: 2px solid #0f0;
-            border-radius: 10px;
-            padding: 20px;
-            margin: 10px;
-            width: 400px;
-            text-align: center;
-            max-height: 90vh;
-            overflow-y: auto;
         }
 
         .menu-title {
@@ -493,6 +481,19 @@
             width: 60px;
             text-align: right;
         }
+        
+        .resource-trend {
+            width: 30px;
+            text-align: center;
+        }
+        
+        .trend-up {
+            color: #00ff00;
+        }
+        
+        .trend-down {
+            color: #ff0000;
+        }
 
         .bank-account {
             border: 1px solid #555;
@@ -576,6 +577,27 @@
             </div>
             <div class="menu-buttons">
                 <button class="minecraft-button" onclick="startGame('singleplayer')">Start Game</button>
+                <button class="minecraft-button" onclick="showMenuSection('game-type-section')">Back</button>
+            </div>
+        </div>
+
+        <!-- Multiplayer Setup -->
+        <div class="menu-section" id="multiplayer-setup" style="display: none;">
+            <h2>Multiplayer Setup</h2>
+            <div class="menu-option">
+                <label for="gangNameMulti">Your Gang Name:</label>
+                <input class="minecraft-input" type="text" id="gangNameMulti" placeholder="Enter Gang Name">
+            </div>
+            <div class="menu-option">
+                <label for="serverAddress">Server Address:</label>
+                <input class="minecraft-input" type="text" id="serverAddress" placeholder="Enter Server IP/URL">
+            </div>
+            <div class="menu-option">
+                <label for="playerName">Your Name:</label>
+                <input class="minecraft-input" type="text" id="playerName" placeholder="Enter Your Name">
+            </div>
+            <div class="menu-buttons">
+                <button class="minecraft-button" onclick="startGame('multiplayer')">Connect</button>
                 <button class="minecraft-button" onclick="showMenuSection('game-type-section')">Back</button>
             </div>
         </div>
@@ -908,16 +930,35 @@
         }
 
         function resetGameData(aiCount = 2) {
+            // Initialize game data based on selected mode
             gameData = {
-                money: gameMode === "sandbox" ? 999999 : 10000,
+                money: 7500, // Everyone starts with $7,500
                 whiteMoney: 0,
                 heat: 0,
                 reputation: 50,
                 inflation: 0,
                 economicStability: 75,
-                marketDemand: { weed: 70, meth: 40, coke: 25, heroin: 15, fentanyl: 5 },
-                marketPrices: { weed: 15, meth: 60, coke: 250, heroin: 600, fentanyl: 1800 },
-                priceVolatility: { weed: 0.1, meth: 0.15, coke: 0.2, heroin: 0.25, fentanyl: 0.3 },
+                marketDemand: {
+                    weed: 70,
+                    meth: 40,
+                    coke: 25,
+                    heroin: 15,
+                    fentanyl: 5
+                },
+                marketPrices: {
+                    weed: 15,
+                    meth: 60,
+                    coke: 250,
+                    heroin: 600,
+                    fentanyl: 1800
+                },
+                priceVolatility: {
+                    weed: 0.1,
+                    meth: 0.15,
+                    coke: 0.2,
+                    heroin: 0.25,
+                    fentanyl: 0.3
+                },
                 inventory: { weed: 20, meth: 0, coke: 0, heroin: 0, fentanyl: 0, chemicals: 0 },
                 productionCapacity: { weed: 5, meth: 0, coke: 0, heroin: 0, fentanyl: 0 },
                 distributionNetworks: 1,
@@ -926,7 +967,13 @@
                 labLevel: 0,
                 armsTier: 0,
                 currentDrug: "weed",
-                personnel: { producers: 2, dealers: 3, soldiers: gameMode === "creative" ? 10 : 2, spies: 0, accountants: 0 },
+                personnel: { 
+                    producers: 2, 
+                    dealers: 3, 
+                    soldiers: gameMode === "creative" ? 10 : 2, 
+                    spies: 0, 
+                    accountants: 0 
+                },
                 lieutenants: [],
                 properties: [],
                 personnelLoyalty: 75,
@@ -941,10 +988,60 @@
                     military2: { name: 'Assault Rifles', desc: '+15% Soldier attack power.', cost: 100000, time: 180, progress: 0, unlocked: false, requires: 'military1' },
                     laundering1: { name: 'Shell Corps', desc: 'Lieutenants take a smaller cut.', cost: 75000, time: 150, progress: 0, unlocked: false, requires: null },
                     laundering2: { name: 'Offshore Accounts', desc: 'Money laundering efficiency +25%.', cost: 200000, time: 200, progress: 0, unlocked: false, requires: 'laundering1' },
-                    market1: { name: 'Market Analysis', desc: 'See market trends and predictions.', cost: 30000, time: 100, progress: 0, unlocked: false, requires: null }
+                    market1: { name: 'Market Analysis', desc: 'See market trends and predictions.', cost: 30000, time: 100, progress: 0, unlocked: false, requires: null },
+                    // New chemical production research
+                    chemProduction: { 
+                        name: 'Chemical Production', 
+                        desc: 'Allows production of chemicals needed for meth.', 
+                        cost: 15000, 
+                        time: 90, 
+                        progress: 0, 
+                        unlocked: false, 
+                        requires: 'logistics1' 
+                    },
+                    methProduction: { 
+                        name: 'Methamphetamine Production', 
+                        desc: 'Unlocks meth production using chemicals.', 
+                        cost: 30000, 
+                        time: 120, 
+                        progress: 0, 
+                        unlocked: false, 
+                        requires: 'chemProduction' 
+                    },
+                    cocaProcessing: { 
+                        name: 'Coca Processing', 
+                        desc: 'Allows processing of coca leaves into cocaine.', 
+                        cost: 75000, 
+                        time: 150, 
+                        progress: 0, 
+                        unlocked: false, 
+                        requires: 'methProduction' 
+                    },
+                    heroinProduction: { 
+                        name: 'Heroin Production', 
+                        desc: 'Unlocks heroin production from opium.', 
+                        cost: 150000, 
+                        time: 180, 
+                        progress: 0, 
+                        unlocked: false, 
+                        requires: 'cocaProcessing' 
+                    },
+                    fentanylProduction: { 
+                        name: 'Fentanyl Synthesis', 
+                        desc: 'Unlocks fentanyl production (high risk, high reward).', 
+                        cost: 300000, 
+                        time: 240, 
+                        progress: 0, 
+                        unlocked: false, 
+                        requires: 'heroinProduction' 
+                    }
                 },
                 researchInProgress: null,
-                victory: { domination: { current: 0, required: 15 }, economic: { current: 0, required: 5000000 }, status: 'Ongoing' },
+                victory: {
+                    domination: { current: 0, required: 15 },
+                    economic: { current: 0, required: 5000000 },
+                    status: 'Ongoing'
+                },
                 gangs: [
                     { name: "Local Thugs", drug: "weed", strength: 1 },
                     { name: "Street Gangs", drug: "meth", strength: 2 },
@@ -958,19 +1055,38 @@
                 manualProduction: { weed: { progress: 0, time: 10 } },
                 economicEvents: [],
                 lastMarketUpdate: 0,
-                economicCycles: { boom: false, recession: false, duration: 0 },
-                bankAccounts: { local: { balance: 0, seizureRisk: 0.1 }, offshore: { balance: 0, seizureRisk: 0.02, transferFee: 0.05 } },
+                economicCycles: {
+                    boom: false,
+                    recession: false,
+                    duration: 0
+                },
+                // Banking system
+                bankAccounts: {
+                    local: { balance: 0, seizureRisk: 0.1 },
+                    offshore: { balance: 0, seizureRisk: 0.02, transferFee: 0.05 }
+                },
+                // Stock market
                 stocks: {
                     "PharmaCorp": { price: 100, owned: 0, volatility: 0.15 },
                     "AgriGrow": { price: 50, owned: 0, volatility: 0.2 },
                     "ChemiCo": { price: 75, owned: 0, volatility: 0.25 },
                     "SecureTrans": { price: 120, owned: 0, volatility: 0.1 }
                 },
-                resourcePrices: { chemicals: 50, equipment: 200, vehicles: 5000 },
-                equipment: { labs: { count: 1, condition: 100 }, vehicles: { count: 2, condition: 100 }, weapons: { count: 5, condition: 100 } }
+                // Resource market
+                resourcePrices: {
+                    chemicals: 50,
+                    equipment: 200,
+                    vehicles: 5000
+                },
+                // Equipment degradation
+                equipment: {
+                    labs: { count: 1, condition: 100 },
+                    vehicles: { count: 2, condition: 100 },
+                    weapons: { count: 5, condition: 100 }
+                }
             };
 
-            // Initialize territories
+            // Initialize territories with economic values
             const territoryNames = ["Docks", "Warehouse District", "Downtown", "Suburbs", "Projects", "West Side", "East Side", "Market", "Old Town", "The Strip", "Airport", "Industrial Park", "Southside", "Northbridge", "Chinatown"]; 
             for (let i = 0; i < 15; i++) { 
                 const economicValue = Math.floor(Math.random() * 100) + 50;
@@ -988,7 +1104,7 @@
                 });
             } 
             
-            // Initialize AI players
+            // Initialize AI players with economic strengths (only if not in creative mode)
             if (gameMode !== "creative") {
                 const aiNames = ["El Jefe", "La Reina", "The Ghost"]; 
                 for (let i = 0; i < aiCount; i++) { 
@@ -996,7 +1112,7 @@
                     gameData.aiPlayers.push({ 
                         id: aiId, 
                         name: aiNames[i], 
-                        money: 10000, 
+                        money: 7500, // AI also starts with $7,500
                         powerLevel: 1, 
                         relationship: Math.floor(Math.random() * 40) - 20, 
                         spies: 1,
@@ -1006,30 +1122,136 @@
                 }
             }
             
-            // Adjust difficulty
-            if (economyDifficulty === 'easy') {
-                gameData.money = gameMode === "sandbox" ? 999999 : 15000;
-                gameData.marketDemand = { weed: 80, meth: 50, coke: 35, heroin: 20, fentanyl: 10 };
-                gameData.personnel = { producers: 3, dealers: 4, soldiers: gameMode === "creative" ? 10 : 3, spies: 0, accountants: 1 };
-            } else if (economyDifficulty === 'hard') {
-                gameData.money = gameMode === "sandbox" ? 999999 : 7500;
-                gameData.marketDemand = { weed: 60, meth: 30, coke: 15, heroin: 10, fentanyl: 3 };
-                gameData.priceVolatility = { weed: 0.15, meth: 0.2, coke: 0.25, heroin: 0.3, fentanyl: 0.35 };
-                gameData.economicStability = 60;
-            } else if (economyDifficulty === 'realistic') {
-                gameData.money = gameMode === "sandbox" ? 999999 : 5000;
-                gameData.marketDemand = { weed: 50, meth: 25, coke: 12, heroin: 8, fentanyl: 2 };
-                gameData.priceVolatility = { weed: 0.2, meth: 0.25, coke: 0.3, heroin: 0.35, fentanyl: 0.4 };
-                gameData.economicStability = 50;
-                gameData.inflation = 0.05;
-            }
-            
-            // Sandbox mode adjustments
+            // Remove difficulty-based money adjustments since everyone starts with $7,500
+            // Only keep sandbox mode adjustment
             if (gameMode === "sandbox") {
-                gameData.personnel = { producers: 10, dealers: 10, soldiers: 10, spies: 5, accountants: 5 };
+                gameData.money = 999999;
+                gameData.personnel = { 
+                    producers: 10, 
+                    dealers: 10, 
+                    soldiers: 10, 
+                    spies: 5, 
+                    accountants: 5 
+                };
                 gameData.labLevel = 3;
                 gameData.inventory = { weed: 100, meth: 100, coke: 100, heroin: 100, fentanyl: 100, chemicals: 1000 };
             }
+        }
+
+        // Territory defense mechanics
+        function calculateDefenseBonus(territoryId) {
+            const territory = gameData.territories[territoryId];
+            let adjacentAllies = 0;
+            
+            // Simple adjacency check
+            gameData.territories.forEach(t => {
+                if (t.owner === territory.owner && t.id !== territory.id) {
+                    // Consider territories adjacent if they're within 2 IDs of each other
+                    if (Math.abs(t.id - territory.id) <= 2) {
+                        adjacentAllies++;
+                    }
+                }
+            });
+            
+            // 10% defense bonus per adjacent allied territory
+            return 1 + (adjacentAllies * 0.1);
+        }
+
+        function attackTerritory(territoryId) {
+            const territory = gameData.territories[territoryId];
+            if (territory.owner === 'Player') {
+                showNotification("You already control this territory.", "orange");
+                return;
+            }
+            
+            if (gameData.personnel.soldiers < 1) {
+                showNotification("You need soldiers to take territory!", "orange");
+                return;
+            }
+            
+            let attackPower = gameData.personnel.soldiers;
+            let defensePower = territory.soldiers * calculateDefenseBonus(territoryId);
+            
+            if (attackPower > defensePower) {
+                territory.owner = 'Player';
+                // Leave more soldiers in conquered territories that are well-defended
+                const defenseBonus = calculateDefenseBonus(territoryId);
+                territory.soldiers = Math.max(1, Math.floor(attackPower / (3 - defenseBonus)));
+                gameData.personnel.soldiers = Math.ceil(gameData.personnel.soldiers / 2);
+                showNotification(`You captured ${territory.name}!`, "lightgreen");
+            } else {
+                gameData.personnel.soldiers = Math.max(0, gameData.personnel.soldiers - Math.ceil(defensePower));
+                showNotification("Your attack failed! You lost soldiers.", "red");
+            }
+        }
+
+        // Chemical production system
+        function produceChemicals() {
+            if (gameData.research.chemProduction.unlocked) {
+                const productionRate = gameData.personnel.producers * 0.1;
+                gameData.inventory.chemicals += Math.floor(productionRate);
+                gameData.heat += productionRate * 0.02;
+                showNotification(`Produced ${Math.floor(productionRate)} chemicals`, "lightblue");
+            } else {
+                showNotification("You need to research Chemical Production first!", "orange");
+            }
+        }
+
+        function runProduction() {
+            // Calculate production based on personnel and facilities
+            const productionRate = gameData.personnel.producers * 0.2 * (gameData.labLevel + 1) * (gameData.equipment.labs.condition / 100);
+            
+            // Add produced drugs to inventory (round to whole numbers)
+            if (gameData.currentDrug === "weed") {
+                // Weed production doesn't require chemicals
+                gameData.inventory.weed += Math.floor(productionRate);
+            } 
+            else if (gameData.currentDrug === "meth" && gameData.research.methProduction.unlocked) {
+                // Meth production requires chemicals
+                const chemicalCost = productionRate * 0.3;
+                if (gameData.inventory.chemicals >= chemicalCost) {
+                    gameData.inventory.meth += Math.floor(productionRate);
+                    gameData.inventory.chemicals -= chemicalCost;
+                } else {
+                    showNotification("Not enough chemicals for meth production!", "orange");
+                }
+            }
+            else if (gameData.currentDrug === "coke" && gameData.research.cocaProcessing.unlocked) {
+                // Coke production requires chemicals
+                const chemicalCost = productionRate * 0.5;
+                if (gameData.inventory.chemicals >= chemicalCost) {
+                    gameData.inventory.coke += Math.floor(productionRate);
+                    gameData.inventory.chemicals -= chemicalCost;
+                } else {
+                    showNotification("Not enough chemicals for cocaine production!", "orange");
+                }
+            }
+            else if (gameData.currentDrug === "heroin" && gameData.research.heroinProduction.unlocked) {
+                // Heroin production requires chemicals
+                const chemicalCost = productionRate * 0.4;
+                if (gameData.inventory.chemicals >= chemicalCost) {
+                    gameData.inventory.heroin += Math.floor(productionRate);
+                    gameData.inventory.chemicals -= chemicalCost;
+                } else {
+                    showNotification("Not enough chemicals for heroin production!", "orange");
+                }
+            }
+            else if (gameData.currentDrug === "fentanyl" && gameData.research.fentanylProduction.unlocked) {
+                // Fentanyl production requires chemicals
+                const chemicalCost = productionRate * 0.6;
+                if (gameData.inventory.chemicals >= chemicalCost) {
+                    gameData.inventory.fentanyl += Math.floor(productionRate);
+                    gameData.inventory.chemicals -= chemicalCost;
+                } else {
+                    showNotification("Not enough chemicals for fentanyl production!", "orange");
+                }
+            }
+            
+            // Increase heat based on production
+            gameData.heat += productionRate * 0.03 * (gameData.labLevel + 1);
+            
+            // Degrade equipment
+            gameData.equipment.labs.condition = Math.max(0, gameData.equipment.labs.condition - 0.1);
         }
 
         function gameLoop() {
@@ -1135,35 +1357,25 @@
             gameData.resourcePrices.vehicles *= (1 + (Math.random() - 0.2) * 0.05);
         }
 
-        function runProduction() {
-            const productionRate = gameData.personnel.producers * 0.2 * (gameData.labLevel + 1) * (gameData.equipment.labs.condition / 100);
-            
-            gameData.inventory[gameData.currentDrug] += Math.floor(productionRate);
-            
-            if (gameData.currentDrug !== 'weed') {
-                const chemicalCost = productionRate * 0.5;
-                gameData.inventory.chemicals = Math.max(0, gameData.inventory.chemicals - chemicalCost);
-            }
-            
-            gameData.heat += productionRate * 0.03 * (gameData.labLevel + 1);
-            
-            gameData.equipment.labs.condition = Math.max(0, gameData.equipment.labs.condition - 0.1);
-        }
-
         function runDistribution() {
+            // Calculate distribution capacity
             const distributionCapacity = gameData.personnel.dealers * 0.5 * gameData.distributionNetworks * 
                                        gameData.transportation.efficiency * (gameData.equipment.vehicles.condition / 100);
             
+            // Sell drugs based on market demand and prices
             const drugs = ['weed', 'meth', 'coke', 'heroin', 'fentanyl'];
             
             drugs.forEach(drug => {
                 if (gameData.inventory[drug] > 0) {
+                    // Calculate how much we can sell based on demand and capacity
                     const marketShare = Math.min(1, gameData.marketDemand[drug] / 100);
                     const potentialSales = distributionCapacity * marketShare;
                     const actualSales = Math.min(gameData.inventory[drug], potentialSales);
                     
+                    // Calculate revenue
                     const revenue = actualSales * gameData.marketPrices[drug];
                     
+                    // Check if we've reached the earning cap for this drug
                     const remainingCap = gameData.drugEarningCaps[drug] - gameData.drugEarnings[drug];
                     
                     if (remainingCap > 0) {
@@ -1182,16 +1394,19 @@
                 }
             });
             
+            // Degrade vehicles
             gameData.equipment.vehicles.condition = Math.max(0, gameData.equipment.vehicles.condition - 0.05);
         }
 
         function runLaundering() {
+            // Calculate laundering capacity based on properties and personnel
             let launderingCap = gameData.properties.reduce((sum, p) => sum + p.cleanRate, 0);
             launderingCap += gameData.personnel.accountants * 500;
             
             if (gameData.research.laundering1.unlocked) launderingCap *= 1.2;
             if (gameData.research.laundering2.unlocked) launderingCap *= 1.25;
             
+            // Calculate laundering efficiency based on economic stability
             const efficiency = gameData.economicStability / 100;
             
             let amountToLaunder = Math.min(gameData.money, launderingCap * efficiency);
@@ -1454,32 +1669,6 @@
             }
         }
 
-        function attackTerritory(territoryId) {
-            const territory = gameData.territories[territoryId];
-            if (territory.owner === 'Player') {
-                showNotification("You already control this territory.", "orange");
-                return;
-            }
-            
-            if (gameData.personnel.soldiers < 1) {
-                showNotification("You need soldiers to take territory!", "orange");
-                return;
-            }
-            
-            let attackPower = gameData.personnel.soldiers;
-            let defensePower = territory.soldiers;
-            
-            if (attackPower > defensePower) {
-                territory.owner = 'Player';
-                territory.soldiers = Math.max(1, Math.floor(attackPower / 2));
-                gameData.personnel.soldiers = Math.ceil(gameData.personnel.soldiers / 2);
-                showNotification(`You captured ${territory.name}!`, "lightgreen");
-            } else {
-                gameData.personnel.soldiers = Math.max(0, gameData.personnel.soldiers - defensePower);
-                showNotification("Your attack failed! You lost soldiers.", "red");
-            }
-        }
-
         function buyProperty(name, cost, cleanRate) {
             if (gameData.money < cost) {
                 showNotification("Not enough dirty money!", "orange");
@@ -1696,7 +1885,7 @@
 
             // Operations panel
             const weedProgressPercent = (gameData.manualProduction.weed.progress / gameData.manualProduction.weed.time) * 100;
-            document.getElementById('operations').innerHTML = `
+            let operationsHTML = `
                 <h2>Operations</h2>
                 <div class="item-list">
                     <h3>Drug Operation</h3>
@@ -1714,7 +1903,18 @@
                     <button onclick="handleButtonClick(produceWeed)" ${gameData.manualProduction.weed.progress > 0 ? 'disabled' : ''}>
                         ${gameData.manualProduction.weed.progress > 0 ? 'Producing...' : 'Produce Weed (5 units)'}
                     </button>
+            `;
 
+            // Add chemical production if researched
+            if (gameData.research.chemProduction.unlocked) {
+                operationsHTML += `
+                    <h3>Chemical Production</h3>
+                    <p>Chemicals: ${Math.floor(gameData.inventory.chemicals)} units</p>
+                    <button onclick="handleButtonClick(produceChemicals)">Produce Chemicals</button>
+                `;
+            }
+
+            operationsHTML += `
                     <h3>Resource Management</h3>
                     <p>Chemicals: ${Math.floor(gameData.inventory.chemicals)} units</p>
                     <button onclick="handleButtonClick(buyResources, 'chemicals', 10)">Buy Chemicals (10 for $${Math.floor(gameData.resourcePrices.chemicals * 10)})</button>
