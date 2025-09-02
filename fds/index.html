@@ -531,6 +531,21 @@
         #youtube-player-container {
             display: none;
         }
+        
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            margin: 5px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--main-green);
+            transition: width 0.5s ease;
+        }
     </style>
 </head>
 <body>
@@ -926,6 +941,12 @@
                 isPaused = false;
                 startTurnTimer();
                 updateUI();
+                
+                // Start the game loop
+                if (gameLoopInterval) {
+                    clearInterval(gameLoopInterval);
+                }
+                gameLoopInterval = setInterval(gameLoop, 1000);
             }
         }
 
@@ -1596,6 +1617,10 @@
                 clearInterval(turnTimer);
                 turnTimer = null;
             }
+            if (gameLoopInterval) {
+                clearInterval(gameLoopInterval);
+                gameLoopInterval = null;
+            }
             document.getElementById('gameOverText').textContent = message;
             document.getElementById('gameOverScreen').style.display = 'flex';
         }
@@ -1861,14 +1886,159 @@
                     clearInterval(turnTimer);
                     turnTimer = null;
                 }
+                if (gameLoopInterval) {
+                    clearInterval(gameLoopInterval);
+                    gameLoopInterval = null;
+                }
                 if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo();
                 pauseBtn.textContent = "Resume";
                 pauseOverlay.style.display = 'flex';
             } else {
                 startTurnTimer();
+                gameLoopInterval = setInterval(gameLoop, 1000);
                 if (ytPlayer && typeof ytPlayer.playVideo === 'function') ytPlayer.playVideo();
                 pauseBtn.textContent = "Pause";
                 pauseOverlay.style.display = 'none';
+            }
+        }
+
+        // Banking functions that were missing
+        function launderMoney(amount) {
+            if (gameData.money >= amount) {
+                gameData.money -= amount;
+                gameData.whiteMoney += amount * 0.7;
+                gameData.heat -= amount * 0.0001;
+                showNotification(`Laundered $${amount}`, "lightgreen");
+            } else {
+                showNotification(`Not enough money to launder $${amount}`, "orange");
+            }
+        }
+
+        function establishBusiness(type) {
+            const costs = {
+                'small': 10000,
+                'restaurant': 25000,
+                'nightclub': 50000,
+                'realestate': 100000
+            };
+            
+            const cleanRates = {
+                'small': 500,
+                'restaurant': 1250,
+                'nightclub': 2500,
+                'realestate': 5000
+            };
+            
+            const cost = costs[type];
+            if (gameData.whiteMoney >= cost) {
+                gameData.whiteMoney -= cost;
+                if (!gameData.properties) gameData.properties = [];
+                gameData.properties.push({ 
+                    name: type.charAt(0).toUpperCase() + type.slice(1) + " Business", 
+                    cleanRate: cleanRates[type] 
+                });
+                showNotification(`Established ${type} business`, "lightgreen");
+            } else {
+                showNotification(`Not enough clean money to establish ${type} business`, "orange");
+            }
+        }
+
+        function loanSharking(amount) {
+            if (gameData.whiteMoney >= amount) {
+                gameData.whiteMoney -= amount;
+                gameData.money += amount * 1.5;
+                showNotification(`Started loan sharking operation`, "lightgreen");
+            } else {
+                showNotification(`Not enough clean money for loan sharking operation`, "orange");
+            }
+        }
+
+        function investStockMarket(amount) {
+            if (gameData.whiteMoney >= amount) {
+                gameData.whiteMoney -= amount;
+                // Random stock selection
+                const stocks = Object.keys(gameData.stocks);
+                const randomStock = stocks[Math.floor(Math.random() * stocks.length)];
+                gameData.stocks[randomStock].owned += Math.floor(amount / gameData.stocks[randomStock].price);
+                showNotification(`Invested $${amount} in stock market`, "lightgreen");
+            } else {
+                showNotification(`Not enough clean money to invest $${amount}`, "orange");
+            }
+        }
+
+        function offshoreTransfer(amount) {
+            if (gameData.whiteMoney >= amount) {
+                gameData.whiteMoney -= amount;
+                gameData.bankAccounts.offshore.balance += amount;
+                showNotification(`Transferred $${amount} to offshore account`, "lightgreen");
+            } else {
+                showNotification(`Not enough clean money to transfer $${amount}`, "orange");
+            }
+        }
+
+        function upgradeBanking(type) {
+            const costs = {
+                'accountants': 15000,
+                'shell': 30000,
+                'offshore': 50000
+            };
+            
+            const cost = costs[type];
+            if (gameData.whiteMoney >= cost) {
+                gameData.whiteMoney -= cost;
+                gameData.economicStability += 10;
+                showNotification(`Upgraded banking system (${type})`, "lightgreen");
+            } else {
+                showNotification(`Not enough clean money for banking upgrade`, "orange");
+            }
+        }
+
+        function bribeOfficials(amount) {
+            if (gameData.money >= amount) {
+                gameData.money -= amount;
+                gameData.heat -= 20;
+                showNotification(`Bribed officials, heat reduced`, "lightgreen");
+            } else {
+                showNotification(`Not enough money to bribe officials`, "orange");
+            }
+        }
+
+        function hireLawyer(amount) {
+            if (gameData.whiteMoney >= amount) {
+                gameData.whiteMoney -= amount;
+                gameData.bankAccounts.local.seizureRisk *= 0.7;
+                gameData.bankAccounts.offshore.seizureRisk *= 0.7;
+                showNotification(`Hired lawyer, seizure risk reduced`, "lightgreen");
+            } else {
+                showNotification(`Not enough clean money to hire lawyer`, "orange");
+            }
+        }
+
+        function launderSlow(amount) {
+            if (gameData.money >= amount) {
+                gameData.money -= amount;
+                gameData.whiteMoney += amount * 0.8;
+                gameData.heat -= amount * 0.0002;
+                showNotification(`Slow laundering completed, less heat generated`, "lightgreen");
+            } else {
+                showNotification(`Not enough money for slow laundering`, "orange");
+            }
+        }
+
+        function fightBack() {
+            if (gameData.personnel.soldiers < 1) {
+                showNotification("You have no soldiers to fight back with!", "orange");
+                return;
+            }
+            
+            showNotification("You're fighting back against the heat!");
+            if (Math.random() > 0.5) {
+                showNotification("You fought back successfully! Heat rose by 15.", "lightgreen");
+                gameData.heat += 15;
+            } else {
+                showNotification("Fight failed. You lost money and a soldier!", "red");
+                gameData.money = Math.max(0, gameData.money - 5000);
+                gameData.personnel.soldiers = Math.max(0, gameData.personnel.soldiers - 1);
             }
         }
 
@@ -1930,6 +2100,8 @@
                     <button onclick="handleButtonClick(fightBack)">Fight Back</button>
                 </div>
             `;
+
+            document.getElementById('operations').innerHTML = operationsHTML;
 
             // Center panel with tabs
             document.getElementById('center-panel').innerHTML = `
@@ -2182,145 +2354,6 @@
             return Math.min(0.5, gameData.heat / 400 + gameData.bankAccounts.local.seizureRisk);
         }
 
-        function launderMoney(amount) {
-            if (gameData.money >= amount) {
-                gameData.money -= amount;
-                gameData.whiteMoney += amount * 0.7;
-                gameData.heat -= amount * 0.0001;
-                showNotification(`Laundered $${amount}`, "lightgreen");
-            } else {
-                showNotification(`Not enough money to launder $${amount}`, "orange");
-            }
-        }
-
-        function establishBusiness(type) {
-            const costs = {
-                'small': 10000,
-                'restaurant': 25000,
-                'nightclub': 50000,
-                'realestate': 100000
-            };
-            
-            const cleanRates = {
-                'small': 500,
-                'restaurant': 1250,
-                'nightclub': 2500,
-                'realestate': 5000
-            };
-            
-            const cost = costs[type];
-            if (gameData.whiteMoney >= cost) {
-                gameData.whiteMoney -= cost;
-                if (!gameData.properties) gameData.properties = [];
-                gameData.properties.push({ 
-                    name: type.charAt(0).toUpperCase() + type.slice(1) + " Business", 
-                    cleanRate: cleanRates[type] 
-                });
-                showNotification(`Established ${type} business`, "lightgreen");
-            } else {
-                showNotification(`Not enough clean money to establish ${type} business`, "orange");
-            }
-        }
-
-        function loanSharking(amount) {
-            if (gameData.whiteMoney >= amount) {
-                gameData.whiteMoney -= amount;
-                gameData.money += amount * 1.5;
-                showNotification(`Started loan sharking operation`, "lightgreen");
-            } else {
-                showNotification(`Not enough clean money for loan sharking operation`, "orange");
-            }
-        }
-
-        function investStockMarket(amount) {
-            if (gameData.whiteMoney >= amount) {
-                gameData.whiteMoney -= amount;
-                // Random stock selection
-                const stocks = Object.keys(gameData.stocks);
-                const randomStock = stocks[Math.floor(Math.random() * stocks.length)];
-                gameData.stocks[randomStock].owned += Math.floor(amount / gameData.stocks[randomStock].price);
-                showNotification(`Invested $${amount} in stock market`, "lightgreen");
-            } else {
-                showNotification(`Not enough clean money to invest $${amount}`, "orange");
-            }
-        }
-
-        function offshoreTransfer(amount) {
-            if (gameData.whiteMoney >= amount) {
-                gameData.whiteMoney -= amount;
-                gameData.bankAccounts.offshore.balance += amount;
-                showNotification(`Transferred $${amount} to offshore account`, "lightgreen");
-            } else {
-                showNotification(`Not enough clean money to transfer $${amount}`, "orange");
-            }
-        }
-
-        function upgradeBanking(type) {
-            const costs = {
-                'accountants': 15000,
-                'shell': 30000,
-                'offshore': 50000
-            };
-            
-            const cost = costs[type];
-            if (gameData.whiteMoney >= cost) {
-                gameData.whiteMoney -= cost;
-                gameData.economicStability += 10;
-                showNotification(`Upgraded banking system (${type})`, "lightgreen");
-            } else {
-                showNotification(`Not enough clean money for banking upgrade`, "orange");
-            }
-        }
-
-        function bribeOfficials(amount) {
-            if (gameData.money >= amount) {
-                gameData.money -= amount;
-                gameData.heat -= 20;
-                showNotification(`Bribed officials, heat reduced`, "lightgreen");
-            } else {
-                showNotification(`Not enough money to bribe officials`, "orange");
-            }
-        }
-
-        function hireLawyer(amount) {
-            if (gameData.whiteMoney >= amount) {
-                gameData.whiteMoney -= amount;
-                gameData.bankAccounts.local.seizureRisk *= 0.7;
-                gameData.bankAccounts.offshore.seizureRisk *= 0.7;
-                showNotification(`Hired lawyer, seizure risk reduced`, "lightgreen");
-            } else {
-                showNotification(`Not enough clean money to hire lawyer`, "orange");
-            }
-        }
-
-        function launderSlow(amount) {
-            if (gameData.money >= amount) {
-                gameData.money -= amount;
-                gameData.whiteMoney += amount * 0.8;
-                gameData.heat -= amount * 0.0002;
-                showNotification(`Slow laundering completed, less heat generated`, "lightgreen");
-            } else {
-                showNotification(`Not enough money for slow laundering`, "orange");
-            }
-        }
-
-        function fightBack() {
-            if (gameData.personnel.soldiers < 1) {
-                showNotification("You have no soldiers to fight back with!", "orange");
-                return;
-            }
-            
-            showNotification("You're fighting back against the heat!");
-            if (Math.random() > 0.5) {
-                showNotification("You fought back successfully! Heat rose by 15.", "lightgreen");
-                gameData.heat += 15;
-            } else {
-                showNotification("Fight failed. You lost money and a soldier!", "red");
-                gameData.money = Math.max(0, gameData.money - 5000);
-                gameData.personnel.soldiers = Math.max(0, gameData.personnel.soldiers - 1);
-            }
-        }
-
         // Make functions globally available
         window.handleButtonClick = handleButtonClick;
         window.showTab = showTab;
@@ -2347,6 +2380,16 @@
         window.endTurn = endTurn;
         window.nextSong = nextSong;
         window.prevSong = prevSong;
+        window.launderMoney = launderMoney;
+        window.establishBusiness = establishBusiness;
+        window.loanSharking = loanSharking;
+        window.investStockMarket = investStockMarket;
+        window.offshoreTransfer = offshoreTransfer;
+        window.upgradeBanking = upgradeBanking;
+        window.bribeOfficials = bribeOfficials;
+        window.hireLawyer = hireLawyer;
+        window.launderSlow = launderSlow;
+        window.fightBack = fightBack;
 
         // Initialize the game
         document.addEventListener('DOMContentLoaded', function() {
@@ -2357,4 +2400,3 @@
     </script>
 </body>
 </html>
-
